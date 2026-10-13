@@ -42,16 +42,23 @@ static void s_test_payload_dtor(void *payload) {
 static int s_bus_sync_test_send(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
-    struct aws_bus_options options = {
-        .policy = AWS_BUS_SYNC_RELIABLE,
-    };
-
-    struct aws_bus *bus = aws_bus_new(allocator, &options);
+    struct aws_bus *bus = aws_bus_new_sync(allocator);
     ASSERT_NOT_NULL(bus);
     AWS_ZERO_STRUCT(s_sync_test);
 
-    ASSERT_SUCCESS(aws_bus_subscribe(bus, 42, s_bus_sync_test_recv, &s_sync_test));
-    aws_bus_send(bus, 42, (void *)&s_test_payload[0], s_test_payload_dtor);
+    struct aws_bus_subscribe_options subscribe_options = {
+        .address = 42,
+        .listener_callback = s_bus_sync_test_recv,
+        .user_data = &s_sync_test,
+    };
+    ASSERT_SUCCESS(aws_bus_subscribe(bus, &subscribe_options));
+
+    struct aws_bus_publish_options publish_options = {
+        .address = 42,
+        .payload = (void *)&s_test_payload[0],
+        .destructor = s_test_payload_dtor,
+    };
+    aws_bus_publish(bus, &publish_options);
 
     ASSERT_INT_EQUALS(1, s_sync_test.count);
     ASSERT_TRUE(s_sync_test.payload_deleted);
@@ -61,13 +68,23 @@ static int s_bus_sync_test_send(struct aws_allocator *allocator, void *ctx) {
 
     const int send_count = 100;
     for (int send = 0; send < send_count; ++send) {
-        aws_bus_send(bus, 42, (void *)&s_test_payload[0], s_test_payload_dtor);
+        struct aws_bus_publish_options loop_publish_options = {
+            .address = 42,
+            .payload = (void *)&s_test_payload[0],
+            .destructor = s_test_payload_dtor,
+        };
+        aws_bus_publish(bus, &loop_publish_options);
     }
 
     ASSERT_INT_EQUALS(send_count, s_sync_test.count);
     ASSERT_TRUE(s_sync_test.payload_deleted);
 
-    aws_bus_unsubscribe(bus, 42, s_bus_sync_test_recv, &s_sync_test);
+    struct aws_bus_unsubscribe_options unsubscribe_options = {
+        .address = 42,
+        .listener_callback = s_bus_sync_test_recv,
+        .user_data = &s_sync_test,
+    };
+    aws_bus_unsubscribe(bus, &unsubscribe_options);
     aws_bus_destroy(bus);
 
     return 0;
@@ -77,12 +94,13 @@ AWS_TEST_CASE(bus_sync_test_send, s_bus_sync_test_send)
 static int s_bus_async_test_lifetime(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
 
-    struct aws_bus_options options = {
-        .policy = AWS_BUS_ASYNC_RELIABLE,
+    struct aws_bus_async_options bus_options = {
+        .reliable = true,
     };
 
-    struct aws_bus *async_bus = aws_bus_new(allocator, &options);
+    struct aws_bus *async_bus = aws_bus_new_async(allocator, &bus_options);
     ASSERT_NOT_NULL(async_bus);
+
     aws_bus_destroy(async_bus);
 
     /* If the background thread didn't exit cleanly, there will be hangs/leaks */

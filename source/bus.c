@@ -32,23 +32,27 @@
 #    pragma warning(disable : 4204) /* nonstandard extension used: non-constant aggregate initializer */
 #endif
 
+#define AWS_BUS_DEFAULT_UNRELIABLE_BUFFER_SIZE 4096
+
+struct bus_vtable {
+    void (*clean_up)(struct aws_bus *bus);
+
+    int (*publish)(struct aws_bus *bus, const struct aws_bus_publish_options *options);
+
+    int (*subscribe)(struct aws_bus *bus, const struct aws_bus_subscribe_options *options);
+
+    void (*unsubscribe)(struct aws_bus *bus, const struct aws_bus_unsubscribe_options *options);
+};
+
 struct aws_bus {
     struct aws_allocator *allocator;
 
-    /* vtable and additional data structures for delivery policy */
+    struct bus_vtable *vtable;
+
     void *impl;
 };
 
 /* MUST be the first member of any impl to allow blind casting */
-struct bus_vtable {
-    void (*clean_up)(struct aws_bus *bus);
-
-    int (*send)(struct aws_bus *bus, uint64_t address, void *payload, void (*destructor)(void *));
-
-    int (*subscribe)(struct aws_bus *bus, uint64_t address, aws_bus_listener_fn *callback, void *user_data);
-
-    void (*unsubscribe)(struct aws_bus *bus, uint64_t address, aws_bus_listener_fn *callback, void *user_data);
-};
 
 /* each bound callback is stored as a bus_listener in the slots table */
 struct bus_listener {
@@ -64,7 +68,7 @@ struct listener_list {
 };
 
 /* find a listener list (or NULL) by address */
-static struct listener_list *bus_find_listeners(struct aws_hash_table *slots, uint64_t address) {
+static struct listener_list *s_bus_find_listeners(struct aws_hash_table *slots, uint64_t address) {
     struct aws_hash_element *elem = NULL;
     if (aws_hash_table_find(slots, (void *)(uintptr_t)address, &elem)) {
         return NULL;
@@ -79,11 +83,11 @@ static struct listener_list *bus_find_listeners(struct aws_hash_table *slots, ui
 }
 
 /* find a listener list by address, or create/insert/return a new one */
-static struct listener_list *bus_find_or_create_listeners(
+static struct listener_list *s_bus_find_or_create_listeners(
     struct aws_allocator *allocator,
     struct aws_hash_table *slots,
     uint64_t address) {
-    struct listener_list *list = bus_find_listeners(slots, address);
+    struct listener_list *list = s_bus_find_listeners(slots, address);
     if (list) {
         return list;
     }
@@ -102,7 +106,7 @@ static void s_bus_deliver_msg_to_slot(
     struct aws_hash_table *slots,
     const void *payload) {
     (void)bus;
-    struct listener_list *list = bus_find_listeners(slots, slot);
+    struct listener_list *list = s_bus_find_listeners(slots, slot);
     if (!list) {
         return;
     }
@@ -136,7 +140,7 @@ static int s_bus_subscribe(
         return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     }
 
-    struct listener_list *list = bus_find_or_create_listeners(bus->allocator, slots, address);
+    struct listener_list *list = s_bus_find_or_create_listeners(bus->allocator, slots, address);
     struct bus_listener *listener = aws_mem_calloc(bus->allocator, 1, sizeof(struct bus_listener));
     listener->deliver = callback;
     listener->user_data = user_data;
@@ -159,7 +163,7 @@ static void s_bus_unsubscribe(
         return;
     }
 
-    struct listener_list *list = bus_find_listeners(slots, address);
+    struct listener_list *list = s_bus_find_listeners(slots, address);
     if (!list) {
         return;
     }
@@ -178,7 +182,7 @@ static void s_bus_unsubscribe(
 }
 
 /* destructor for listener lists in the slots tables */
-void s_bus_destroy_listener_list(void *data) {
+static void s_bus_destroy_listener_list(void *data) {
     struct listener_list *list = data;
     AWS_PRECONDITION(list->allocator);
     /* call all listeners with an AWS_BUS_ADDRESS_CLOSE message type to clean up */
@@ -196,7 +200,8 @@ void s_bus_destroy_listener_list(void *data) {
  * AWS_BUS_SYNC implementation
  */
 struct bus_sync_impl {
-    struct bus_vtable vtable;
+    struct aws_bus base;
+
     struct {
         /* Map of address -> list of listeners */
         struct aws_hash_table table;
@@ -209,147 +214,158 @@ static void s_bus_sync_clean_up(struct aws_bus *bus) {
     aws_mem_release(bus->allocator, impl);
 }
 
-static int s_bus_sync_send(struct aws_bus *bus, uint64_t address, void *payload, void (*destructor)(void *)) {
+static int s_bus_sync_publish(struct aws_bus *bus, const struct aws_bus_publish_options *options) {
     struct bus_sync_impl *impl = bus->impl;
-    s_bus_deliver_msg(bus, address, &impl->slots.table, payload);
-    if (destructor) {
-        destructor(payload);
+    s_bus_deliver_msg(bus, options->address, &impl->slots.table, options->payload);
+    if (options->destructor) {
+        options->destructor(options->payload);
     }
     return AWS_OP_SUCCESS;
 }
 
-static int s_bus_sync_subscribe(struct aws_bus *bus, uint64_t address, aws_bus_listener_fn *callback, void *user_data) {
+static int s_bus_sync_subscribe(struct aws_bus *bus, const struct aws_bus_subscribe_options *options) {
     struct bus_sync_impl *impl = bus->impl;
-    return s_bus_subscribe(bus, address, &impl->slots.table, callback, user_data);
+    return s_bus_subscribe(bus, options->address, &impl->slots.table, options->listener_callback, options->user_data);
 }
 
-static void s_bus_sync_unsubscribe(
-    struct aws_bus *bus,
-    uint64_t address,
-    aws_bus_listener_fn *callback,
-    void *user_data) {
+static void s_bus_sync_unsubscribe(struct aws_bus *bus, const struct aws_bus_unsubscribe_options *options) {
     struct bus_sync_impl *impl = bus->impl;
-    s_bus_unsubscribe(bus, address, &impl->slots.table, callback, user_data);
+    s_bus_unsubscribe(bus, options->address, &impl->slots.table, options->listener_callback, options->user_data);
 }
 
 static struct bus_vtable bus_sync_vtable = {
     .clean_up = s_bus_sync_clean_up,
-    .send = s_bus_sync_send,
+    .publish = s_bus_sync_publish,
     .subscribe = s_bus_sync_subscribe,
     .unsubscribe = s_bus_sync_unsubscribe,
 };
 
-static void s_bus_sync_init(struct aws_bus *bus, const struct aws_bus_options *options) {
-    (void)options;
-
-    struct bus_sync_impl *impl = bus->impl = aws_mem_calloc(bus->allocator, 1, sizeof(struct bus_sync_impl));
-    impl->vtable = bus_sync_vtable;
+struct aws_bus *aws_bus_new_sync(struct aws_allocator *allocator) {
+    struct bus_sync_impl *impl = aws_mem_calloc(allocator, 1, sizeof(struct bus_sync_impl));
+    impl->base.allocator = allocator;
+    impl->base.vtable = &bus_sync_vtable;
+    impl->base.impl = impl;
 
     if (aws_hash_table_init(
-            &impl->slots.table, bus->allocator, 8, aws_hash_ptr, aws_ptr_eq, NULL, s_bus_destroy_listener_list)) {
+            &impl->slots.table, allocator, 8, aws_hash_ptr, aws_ptr_eq, NULL, s_bus_destroy_listener_list)) {
         goto error;
     }
 
-    return;
+    return &impl->base;
 
 error:
-    aws_mem_release(bus->allocator, impl);
+
+    aws_mem_release(allocator, impl);
+
+    return NULL;
 }
 
 /*
  * AWS_BUS_ASYNC implementation
  */
 struct bus_async_impl {
-    struct bus_vtable vtable;
-    struct {
-        /* Map of address -> list of listeners */
-        struct aws_hash_table table;
-    } slots;
+    struct aws_bus base;
 
-    /* Queue of bus_messages to deliver */
+    struct aws_bus_async_options options;
+
+    struct aws_thread thread;
+
+    /* backing memory for the message free list */
+    void *message_buffer_start;
+    void *message_buffer_end; /* 1 past the end of buffer */
+
     struct {
         struct aws_mutex mutex;
-        /* backing memory for the message free list */
-        void *buffer;
-        void *buffer_end; /* 1 past the end of buffer */
+
+        struct aws_condition_variable notify;
+
+        enum aws_bus_async_state state;
+
+        /* Map of address -> list of listeners */
+        struct aws_hash_table table;
+
         /* message free list */
         struct aws_linked_list free; /* struct bus_message */
+
         /* message delivery queue */
         struct aws_linked_list msgs; /* struct bus_message */
+
         /* list of pending adds/removes of listeners */
         struct aws_linked_list subs; /* struct pending_listener */
-    } queue;
 
-    /* dispatch thread */
-    struct {
-        struct aws_thread thread;
-        struct aws_condition_variable notify;
-        bool running;
-        struct aws_atomic_var started;
-        struct aws_atomic_var exited;
-    } dispatch;
-
-    bool reliable;
+    } shared_state;
 };
 
 /* represents a message in the queue on impls that queue */
 struct bus_message {
     struct aws_linked_list_node list_node;
-    uint64_t address;
-    void *payload;
-
-    void (*destructor)(void *);
+    struct aws_bus_publish_options publish_options;
 };
 
-struct pending_listener {
+enum aws_bus_listener_operation_type {
+    AWS_BLOT_SUBSCRIBE,
+    AWS_BLOT_UNSUBSCRIBE,
+};
+
+struct pending_listener_operation {
     struct aws_linked_list_node list_node;
-    uint64_t address;
-    aws_bus_listener_fn *listener;
-    void *user_data;
-    uint32_t add : 1;
-    uint32_t remove : 1;
+    enum aws_bus_listener_operation_type type;
+    union {
+        struct aws_bus_subscribe_options subscribe_options;
+        struct aws_bus_unsubscribe_options unsubscribe_options;
+    } options;
 };
 
 static void s_bus_message_clean_up(struct bus_message *msg) {
-    if (msg->destructor) {
-        msg->destructor(msg->payload);
+    if (msg->publish_options.destructor) {
+        msg->publish_options.destructor(msg->publish_options.payload);
     }
-    msg->destructor = NULL;
-    msg->payload = NULL;
+    msg->publish_options.destructor = NULL;
+    msg->publish_options.payload = NULL;
+}
+
+static void s_bus_async_free_message_reliable(struct aws_bus *bus, struct bus_message *msg) {
+    s_bus_message_clean_up(msg);
+    aws_mem_release(bus->allocator, msg);
 }
 
 /* Assumes the caller holds the lock */
-static void s_bus_async_free_message(struct aws_bus *bus, struct bus_message *msg) {
+static void s_bus_async_free_message_unreliable(struct aws_bus *bus, struct bus_message *msg) {
     struct bus_async_impl *impl = bus->impl;
     s_bus_message_clean_up(msg);
-    if ((void *)msg >= impl->queue.buffer && (void *)msg < impl->queue.buffer_end) {
+    if ((void *)msg >= impl->message_buffer_start && (void *)msg < impl->message_buffer_end) {
         AWS_ZERO_STRUCT(*msg);
-        aws_linked_list_push_back(&impl->queue.free, &msg->list_node);
+        aws_linked_list_push_back(&impl->shared_state.free, &msg->list_node);
         return;
     }
     aws_mem_release(bus->allocator, msg);
 }
 
+static struct bus_message *s_bus_async_alloc_message_reliable(struct aws_bus *bus) {
+    return aws_mem_calloc(bus->allocator, 1, sizeof(struct bus_message));
+}
+
 /* Assumes the caller holds the lock */
-struct bus_message *s_bus_async_alloc_message(struct aws_bus *bus) {
+static struct bus_message *s_bus_async_alloc_message_unreliable(struct aws_bus *bus) {
     struct bus_async_impl *impl = bus->impl;
 
     /* try the free list first */
-    if (!aws_linked_list_empty(&impl->queue.free)) {
-        struct aws_linked_list_node *msg_node = aws_linked_list_pop_back(&impl->queue.free);
+    if (!aws_linked_list_empty(&impl->shared_state.free)) {
+        struct aws_linked_list_node *msg_node = aws_linked_list_pop_back(&impl->shared_state.free);
         struct bus_message *msg = AWS_CONTAINER_OF(msg_node, struct bus_message, list_node);
         return msg;
     }
 
     /* unreliable will re-use the oldest message */
-    if (!impl->reliable) {
-        struct aws_linked_list_node *msg_node = aws_linked_list_pop_front(&impl->queue.msgs);
+    if (!aws_linked_list_empty(&impl->shared_state.msgs)) {
+        struct aws_linked_list_node *msg_node = aws_linked_list_pop_front(&impl->shared_state.msgs);
         struct bus_message *msg = AWS_CONTAINER_OF(msg_node, struct bus_message, list_node);
-        s_bus_async_free_message(bus, msg);
-        return s_bus_async_alloc_message(bus);
+        s_bus_async_free_message_unreliable(bus, msg);
+
+        return msg;
     }
 
-    return aws_mem_calloc(bus->allocator, 1, sizeof(struct bus_message));
+    return NULL;
 }
 
 /*
@@ -360,111 +376,149 @@ static void s_bus_apply_listeners(struct aws_bus *bus, struct aws_linked_list *p
     struct bus_async_impl *impl = bus->impl;
     while (!aws_linked_list_empty(pending_subs)) {
         struct aws_linked_list_node *node = aws_linked_list_pop_front(pending_subs);
-        struct pending_listener *listener = AWS_CONTAINER_OF(node, struct pending_listener, list_node);
-        if (listener->add) {
-            s_bus_subscribe(bus, listener->address, &impl->slots.table, listener->listener, listener->user_data);
-        } else if (listener->remove) {
-            s_bus_unsubscribe(bus, listener->address, &impl->slots.table, listener->listener, listener->user_data);
+        struct pending_listener_operation *listener =
+            AWS_CONTAINER_OF(node, struct pending_listener_operation, list_node);
+        switch (listener->type) {
+            case AWS_BLOT_SUBSCRIBE: {
+                struct aws_bus_subscribe_options *options = &listener->options.subscribe_options;
+                s_bus_subscribe(
+                    bus, options->address, &impl->shared_state.table, options->listener_callback, options->user_data);
+                break;
+            }
+
+            case AWS_BLOT_UNSUBSCRIBE: {
+                struct aws_bus_unsubscribe_options *options = &listener->options.unsubscribe_options;
+                s_bus_unsubscribe(
+                    bus, options->address, &impl->shared_state.table, options->listener_callback, options->user_data);
+                if (options->unsubscribe_completion) {
+                    options->unsubscribe_completion(options->address, options->user_data);
+                }
+                break;
+            }
+
+            default:
+                break;
         }
+
         aws_mem_release(bus->allocator, listener);
     }
 }
 
 static void s_bus_async_deliver_messages(struct aws_bus *bus, struct aws_linked_list *pending_msgs) {
     struct bus_async_impl *impl = bus->impl;
+    bool reliable = impl->options.reliable;
     struct aws_linked_list_node *msg_node = aws_linked_list_begin(pending_msgs);
     for (; msg_node != aws_linked_list_end(pending_msgs); msg_node = aws_linked_list_next(msg_node)) {
         struct bus_message *msg = AWS_CONTAINER_OF(msg_node, struct bus_message, list_node);
-        s_bus_deliver_msg(bus, msg->address, &impl->slots.table, msg->payload);
-        s_bus_message_clean_up(msg);
-    }
-
-    /* push all pending messages back on the free list */
-    aws_mutex_lock(&impl->queue.mutex);
-    {
-        while (!aws_linked_list_empty(pending_msgs)) {
-            msg_node = aws_linked_list_pop_front(pending_msgs);
-            struct bus_message *msg = AWS_CONTAINER_OF(msg_node, struct bus_message, list_node);
-            s_bus_async_free_message(bus, msg);
+        s_bus_deliver_msg(bus, msg->publish_options.address, &impl->shared_state.table, msg->publish_options.payload);
+        if (reliable) {
+            s_bus_async_free_message_reliable(bus, msg);
         }
     }
-    aws_mutex_unlock(&impl->queue.mutex);
+
+    if (!reliable) {
+        /* push all pending messages back on the free list */
+        aws_mutex_lock(&impl->shared_state.mutex);
+        {
+            while (!aws_linked_list_empty(pending_msgs)) {
+                msg_node = aws_linked_list_pop_front(pending_msgs);
+                struct bus_message *msg = AWS_CONTAINER_OF(msg_node, struct bus_message, list_node);
+                s_bus_async_free_message_unreliable(bus, msg);
+            }
+        }
+        aws_mutex_unlock(&impl->shared_state.mutex);
+    }
 }
 
-static void s_bus_async_clean_up(struct aws_bus *bus) {
+static void s_bus_async_clean_up_thread_fn(void *thread_data) {
+    struct aws_bus *bus = thread_data;
     struct bus_async_impl *impl = bus->impl;
 
     /* shut down delivery thread, clean up dispatch */
-    AWS_LOGF_TRACE(AWS_LS_COMMON_BUS, "bus: %p clean_up: starting final drain", (void *)bus);
-    aws_mutex_lock(&impl->queue.mutex);
-    impl->dispatch.running = false;
-    aws_mutex_unlock(&impl->queue.mutex);
-    aws_condition_variable_notify_one(&impl->dispatch.notify);
-    /* Spin wait for the final drain and dispatch thread to complete */
-    while (!aws_atomic_load_int(&impl->dispatch.exited)) {
-        aws_thread_current_sleep(1000 * 1000); /* 1 microsecond */
-    }
-    AWS_LOGF_TRACE(AWS_LS_COMMON_BUS, "bus: %p clean_up: finished final drain", (void *)bus);
-    aws_thread_join(&impl->dispatch.thread);
-    aws_thread_clean_up(&impl->dispatch.thread);
-    aws_condition_variable_clean_up(&impl->dispatch.notify);
+    aws_mutex_lock(&impl->shared_state.mutex);
+    impl->shared_state.state = AWS_BAS_SHUTTING_DOWN;
+    aws_condition_variable_notify_all(&impl->shared_state.notify);
+    aws_mutex_unlock(&impl->shared_state.mutex);
+
+    aws_thread_join(&impl->thread);
+    aws_thread_clean_up(&impl->thread);
 
     /* should be impossible for subs or msgs to remain after final drain */
-    AWS_FATAL_ASSERT(aws_linked_list_empty(&impl->queue.msgs));
-    AWS_FATAL_ASSERT(aws_linked_list_empty(&impl->queue.subs));
+    AWS_FATAL_ASSERT(aws_linked_list_empty(&impl->shared_state.msgs));
+    AWS_FATAL_ASSERT(aws_linked_list_empty(&impl->shared_state.subs));
 
     /* this frees everything that the free/msgs lists point to */
-    if (impl->queue.buffer) {
-        aws_mem_release(bus->allocator, impl->queue.buffer);
+    if (impl->message_buffer_start) {
+        aws_mem_release(bus->allocator, impl->message_buffer_start);
     }
 
-    aws_mutex_clean_up(&impl->queue.mutex);
+    aws_mutex_clean_up(&impl->shared_state.mutex);
+    aws_condition_variable_clean_up(&impl->shared_state.notify);
 
-    aws_hash_table_clean_up(&impl->slots.table);
+    aws_hash_table_clean_up(&impl->shared_state.table);
+
+    void (*destroy_callback_fn)(void *) = impl->options.destroy_callback_fn;
+    void *destroy_callback_user_data = impl->options.callback_user_data;
+
     aws_mem_release(bus->allocator, impl);
+
+    if (destroy_callback_fn) {
+        destroy_callback_fn(destroy_callback_user_data);
+    }
+}
+
+static void s_aws_bus_async_destroy_async(struct aws_bus *bus) {
+    /*
+     * It's possible that someone calls destroy from the dispatch thread of the bus (event callback).  While a terrible
+     * idea, let's not deadlock or crash.  So spawn a thread to do the actual clean up.  A clone of what we do with
+     * event loop group.
+     */
+    struct aws_thread cleanup_thread;
+    AWS_ZERO_STRUCT(cleanup_thread);
+
+    aws_thread_init(&cleanup_thread, bus->allocator);
+
+    struct aws_thread_options thread_options = *aws_default_thread_options();
+    thread_options.join_strategy = AWS_TJS_MANAGED;
+    thread_options.name = aws_byte_cursor_from_c_str("AsyncBusCleanup"); /* 15 characters is max for Linux */
+
+    aws_thread_launch(&cleanup_thread, s_bus_async_clean_up_thread_fn, bus, &thread_options);
 }
 
 static bool s_bus_async_should_wake_up(void *user_data) {
     struct bus_async_impl *impl = user_data;
-    return !impl->dispatch.running || !aws_linked_list_empty(&impl->queue.subs) ||
-           !aws_linked_list_empty(&impl->queue.msgs);
-}
-
-static bool s_bus_async_is_running(struct bus_async_impl *impl) {
-    aws_mutex_lock(&impl->queue.mutex);
-    bool running = impl->dispatch.running;
-    aws_mutex_unlock(&impl->queue.mutex);
-    return running;
+    return (impl->shared_state.state == AWS_BAS_SHUTTING_DOWN) || !aws_linked_list_empty(&impl->shared_state.subs) ||
+           !aws_linked_list_empty(&impl->shared_state.msgs);
 }
 
 /* Async bus delivery thread loop */
-static void s_bus_async_deliver(void *user_data) {
+static void s_bus_async_thread_fn(void *user_data) {
     struct aws_bus *bus = user_data;
     struct bus_async_impl *impl = bus->impl;
 
-    aws_atomic_store_int(&impl->dispatch.started, 1);
     AWS_LOGF_DEBUG(AWS_LS_COMMON_BUS, "bus %p: delivery thread loop started", (void *)bus);
 
-    /* once shutdown has been triggered, need to drain one more time to ensure all queues are empty */
-    int pending_drains = 1;
-    do {
+    bool done = false;
+    while (!done) {
         struct aws_linked_list pending_msgs;
         aws_linked_list_init(&pending_msgs);
 
         struct aws_linked_list pending_subs;
         aws_linked_list_init(&pending_subs);
 
-        aws_mutex_lock(&impl->queue.mutex);
+        aws_mutex_lock(&impl->shared_state.mutex);
         {
             aws_condition_variable_wait_pred(
-                &impl->dispatch.notify, &impl->queue.mutex, s_bus_async_should_wake_up, impl);
+                &impl->shared_state.notify, &impl->shared_state.mutex, s_bus_async_should_wake_up, impl);
 
             /* copy out any queued subs/unsubs */
-            aws_linked_list_swap_contents(&impl->queue.subs, &pending_subs);
+            aws_linked_list_swap_contents(&impl->shared_state.subs, &pending_subs);
             /* copy out any queued messages */
-            aws_linked_list_swap_contents(&impl->queue.msgs, &pending_msgs);
+            aws_linked_list_swap_contents(&impl->shared_state.msgs, &pending_msgs);
+
+            done = impl->shared_state.state == AWS_BAS_SHUTTING_DOWN;
         }
-        aws_mutex_unlock(&impl->queue.mutex);
+        aws_mutex_unlock(&impl->shared_state.mutex);
 
         /* first resolve subs/unsubs */
         if (!aws_linked_list_empty(&pending_subs)) {
@@ -475,228 +529,273 @@ static void s_bus_async_deliver(void *user_data) {
         if (!aws_linked_list_empty(&pending_msgs)) {
             s_bus_async_deliver_messages(bus, &pending_msgs);
         }
-    } while (s_bus_async_is_running(impl) || pending_drains--);
-
-    /* record that the dispatch thread is done */
-    aws_atomic_store_int(&impl->dispatch.exited, 1);
+    }
 }
 
-int s_bus_async_send(struct aws_bus *bus, uint64_t address, void *payload, void (*destructor)(void *)) {
+static int s_bus_async_publish_reliable(struct aws_bus *bus, const struct aws_bus_publish_options *options) {
     struct bus_async_impl *impl = bus->impl;
+    int result = AWS_OP_ERR;
 
-    aws_mutex_lock(&impl->queue.mutex);
+    struct bus_message *msg = s_bus_async_alloc_message_reliable(bus);
+    msg->publish_options = *options;
+
+    aws_mutex_lock(&impl->shared_state.mutex);
     {
-        if (!impl->dispatch.running) {
-            AWS_LOGF_WARN(
-                AWS_LS_COMMON_BUS, "bus %p: message sent after clean_up: address: %" PRIu64 "", (void *)bus, address);
-            aws_mutex_unlock(&impl->queue.mutex);
-            return aws_raise_error(AWS_ERROR_INVALID_STATE);
+        if (impl->shared_state.state == AWS_BAS_RUNNING) {
+
+            /* push the message onto the delivery queue */
+            aws_linked_list_push_back(&impl->shared_state.msgs, &msg->list_node);
+            result = AWS_OP_SUCCESS;
+
+            /* notify the delivery thread to wake up */
+            aws_condition_variable_notify_one(&impl->shared_state.notify);
+        } else {
+            s_bus_async_free_message_reliable(bus, msg);
         }
-
-        struct bus_message *msg = s_bus_async_alloc_message(bus);
-        msg->address = address;
-        msg->payload = payload;
-        msg->destructor = destructor;
-
-        /* push the message onto the delivery queue */
-        aws_linked_list_push_back(&impl->queue.msgs, &msg->list_node);
     }
-    aws_mutex_unlock(&impl->queue.mutex);
+    aws_mutex_unlock(&impl->shared_state.mutex);
 
-    /* notify the delivery thread to wake up */
-    aws_condition_variable_notify_one(&impl->dispatch.notify);
+    if (result == AWS_OP_ERR) {
+        AWS_LOGF_WARN(
+            AWS_LS_COMMON_BUS,
+            "bus %p: message sent after clean_up: address: %" PRIu64 "",
+            (void *)bus,
+            options->address);
+        aws_raise_error(AWS_ERROR_INVALID_STATE);
+    }
+
+    return result;
+}
+
+static int s_bus_async_publish_unreliable(struct aws_bus *bus, const struct aws_bus_publish_options *options) {
+    struct bus_async_impl *impl = bus->impl;
+    int result = AWS_OP_ERR;
+
+    aws_mutex_lock(&impl->shared_state.mutex);
+    {
+        if (impl->shared_state.state == AWS_BAS_RUNNING) {
+            struct bus_message *msg = s_bus_async_alloc_message_unreliable(bus);
+            if (msg) {
+                msg->publish_options = *options;
+
+                /* push the message onto the delivery queue */
+                aws_linked_list_push_back(&impl->shared_state.msgs, &msg->list_node);
+                result = AWS_OP_SUCCESS;
+
+                /* notify the delivery thread to wake up */
+                aws_condition_variable_notify_one(&impl->shared_state.notify);
+            }
+        }
+    }
+    aws_mutex_unlock(&impl->shared_state.mutex);
+
+    if (result) {
+        AWS_LOGF_WARN(
+            AWS_LS_COMMON_BUS,
+            "bus %p: message sent after clean_up: address: %" PRIu64 "",
+            (void *)bus,
+            options->address);
+        aws_raise_error(AWS_ERROR_INVALID_STATE);
+    }
 
     return AWS_OP_SUCCESS;
 }
 
-int s_bus_async_subscribe(struct aws_bus *bus, uint64_t address, aws_bus_listener_fn *listener, void *user_data) {
+static int s_bus_async_subscribe(struct aws_bus *bus, const struct aws_bus_subscribe_options *options) {
     struct bus_async_impl *impl = bus->impl;
 
-    if (address == AWS_BUS_ADDRESS_CLOSE) {
+    if (options->address == AWS_BUS_ADDRESS_CLOSE) {
         AWS_LOGF_ERROR(AWS_LS_COMMON_BUS, "Cannot subscribe to AWS_BUS_ADDRESS_CLOSE");
         return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
     }
 
-    aws_mutex_lock(&impl->queue.mutex);
+    int result = AWS_OP_ERR;
+    struct pending_listener_operation *sub =
+        aws_mem_calloc(bus->allocator, 1, sizeof(struct pending_listener_operation));
+    sub->type = AWS_BLOT_SUBSCRIBE;
+    sub->options.subscribe_options = *options;
+
+    aws_mutex_lock(&impl->shared_state.mutex);
     {
-        if (!impl->dispatch.running) {
-            AWS_LOGF_WARN(
-                AWS_LS_COMMON_BUS,
-                "bus %p: subscribe requested after clean_up: address: %" PRIu64 "",
-                (void *)bus,
-                address);
-            aws_mutex_unlock(&impl->queue.mutex);
-            return aws_raise_error(AWS_ERROR_INVALID_STATE);
+        if (impl->shared_state.state == AWS_BAS_RUNNING) {
+            aws_linked_list_push_back(&impl->shared_state.subs, &sub->list_node);
+            result = AWS_OP_SUCCESS;
+
+            /* notify the delivery thread to wake up */
+            aws_condition_variable_notify_one(&impl->shared_state.notify);
         }
-
-        struct pending_listener *sub = aws_mem_calloc(bus->allocator, 1, sizeof(struct pending_listener));
-        sub->address = address;
-        sub->listener = listener;
-        sub->user_data = user_data;
-        sub->add = true;
-        aws_linked_list_push_back(&impl->queue.subs, &sub->list_node);
     }
-    aws_mutex_unlock(&impl->queue.mutex);
+    aws_mutex_unlock(&impl->shared_state.mutex);
 
-    /* notify the delivery thread to wake up */
-    aws_condition_variable_notify_one(&impl->dispatch.notify);
-    return AWS_OP_SUCCESS;
+    if (result) {
+        aws_mem_release(bus->allocator, sub);
+        AWS_LOGF_WARN(
+            AWS_LS_COMMON_BUS,
+            "bus %p: subscribe requested after clean_up: address: %" PRIu64 "",
+            (void *)bus,
+            options->address);
+        aws_raise_error(AWS_ERROR_INVALID_STATE);
+    }
+
+    return result;
 }
 
-void s_bus_async_unsubscribe(struct aws_bus *bus, uint64_t address, aws_bus_listener_fn *listener, void *user_data) {
+static void s_bus_async_unsubscribe(struct aws_bus *bus, const struct aws_bus_unsubscribe_options *options) {
     struct bus_async_impl *impl = bus->impl;
 
-    if (address == AWS_BUS_ADDRESS_CLOSE) {
+    if (options->address == AWS_BUS_ADDRESS_CLOSE) {
         AWS_LOGF_ERROR(AWS_LS_COMMON_BUS, "Cannot unsubscribe from AWS_BUS_ADDRESS_CLOSE");
         return;
     }
 
-    aws_mutex_lock(&impl->queue.mutex);
+    int result = AWS_OP_ERR;
+    struct pending_listener_operation *unsub =
+        aws_mem_calloc(bus->allocator, 1, sizeof(struct pending_listener_operation));
+    unsub->type = AWS_BLOT_UNSUBSCRIBE;
+    ;
+    unsub->options.unsubscribe_options = *options;
+
+    aws_mutex_lock(&impl->shared_state.mutex);
     {
-        if (!impl->dispatch.running) {
-            AWS_LOGF_WARN(
-                AWS_LS_COMMON_BUS,
-                "bus %p: unsubscribe requested after clean_up: address: %" PRIu64 "",
-                (void *)bus,
-                address);
-            aws_mutex_unlock(&impl->queue.mutex);
-            return;
+        if (impl->shared_state.state == AWS_BAS_RUNNING) {
+            result = AWS_OP_SUCCESS;
+            aws_linked_list_push_back(&impl->shared_state.subs, &unsub->list_node);
+
+            /* notify the delivery thread to wake up */
+            aws_condition_variable_notify_one(&impl->shared_state.notify);
         }
-
-        struct pending_listener *unsub = aws_mem_calloc(bus->allocator, 1, sizeof(struct pending_listener));
-        unsub->address = address;
-        unsub->listener = listener;
-        unsub->user_data = user_data;
-        unsub->remove = true;
-        aws_linked_list_push_back(&impl->queue.subs, &unsub->list_node);
     }
-    aws_mutex_unlock(&impl->queue.mutex);
+    aws_mutex_unlock(&impl->shared_state.mutex);
 
-    /* notify the delivery thread to wake up */
-    aws_condition_variable_notify_one(&impl->dispatch.notify);
+    if (result) {
+        aws_mem_release(bus->allocator, unsub);
+        AWS_LOGF_WARN(
+            AWS_LS_COMMON_BUS,
+            "bus %p: unsubscribe requested after clean_up: address: %" PRIu64 "",
+            (void *)bus,
+            options->address);
+    }
 }
 
-static struct bus_vtable bus_async_vtable = {
-    .clean_up = s_bus_async_clean_up,
-    .send = s_bus_async_send,
+static struct bus_vtable bus_async_reliable_vtable = {
+    .clean_up = s_aws_bus_async_destroy_async,
+    .publish = s_bus_async_publish_reliable,
     .subscribe = s_bus_async_subscribe,
     .unsubscribe = s_bus_async_unsubscribe,
 };
 
-static void s_bus_async_init(struct aws_bus *bus, const struct aws_bus_options *options) {
-    struct bus_async_impl *impl = bus->impl = aws_mem_calloc(bus->allocator, 1, sizeof(struct bus_async_impl));
-    impl->vtable = bus_async_vtable;
-    impl->reliable = (options->policy == AWS_BUS_ASYNC_RELIABLE);
+static struct bus_vtable bus_async_unreliable_vtable = {
+    .clean_up = s_aws_bus_async_destroy_async,
+    .publish = s_bus_async_publish_unreliable,
+    .subscribe = s_bus_async_subscribe,
+    .unsubscribe = s_bus_async_unsubscribe,
+};
+
+struct aws_bus *aws_bus_new_async(struct aws_allocator *allocator, const struct aws_bus_async_options *options) {
+    struct bus_async_impl *impl = aws_mem_calloc(allocator, 1, sizeof(struct bus_async_impl));
+    impl->base.allocator = allocator;
+    impl->base.impl = impl;
+
+    if (options->reliable) {
+        impl->base.vtable = &bus_async_reliable_vtable;
+    } else {
+        impl->base.vtable = &bus_async_unreliable_vtable;
+    }
+
+    impl->options = *options;
 
     /* init msg queue */
-    if (aws_mutex_init(&impl->queue.mutex)) {
+    if (aws_mutex_init(&impl->shared_state.mutex)) {
         AWS_LOGF_ERROR(
             AWS_LS_COMMON_BUS,
             "bus %p: Unable to initialize queue synchronization: %s",
-            (void *)bus,
+            (void *)&impl->base,
             aws_error_name(aws_last_error()));
         goto error;
     }
-    aws_linked_list_init(&impl->queue.msgs);
-    aws_linked_list_init(&impl->queue.free);
-    aws_linked_list_init(&impl->queue.subs);
+    aws_linked_list_init(&impl->shared_state.msgs);
+    aws_linked_list_init(&impl->shared_state.free);
+    aws_linked_list_init(&impl->shared_state.subs);
 
     /* push as many bus_messages as we can into the free list from the buffer */
-    if (options->buffer_size) {
-        impl->queue.buffer = aws_mem_calloc(bus->allocator, 1, options->buffer_size);
-        impl->queue.buffer_end = ((uint8_t *)impl->queue.buffer) + options->buffer_size;
-        const int msg_count = (int)(options->buffer_size / sizeof(struct bus_message));
-        for (int msg_idx = 0; msg_idx < msg_count; ++msg_idx) {
-            struct bus_message *msg = (void *)&((char *)impl->queue.buffer)[msg_idx * sizeof(struct bus_message)];
-            aws_linked_list_push_back(&impl->queue.free, &msg->list_node);
+    if (options->reliable) {
+        size_t buffer_size = options->buffer_size;
+        size_t message_count = options->buffer_size / sizeof(struct bus_message);
+        if (message_count == 0) {
+            buffer_size = AWS_BUS_DEFAULT_UNRELIABLE_BUFFER_SIZE;
+            message_count = buffer_size / sizeof(struct bus_message);
+        }
+
+        impl->message_buffer_start = aws_mem_calloc(allocator, 1, buffer_size);
+        impl->message_buffer_end = ((uint8_t *)impl->message_buffer_start) + buffer_size;
+
+        for (size_t msg_idx = 0; msg_idx < message_count; ++msg_idx) {
+            struct bus_message *msg =
+                (void *)&((char *)impl->message_buffer_start)[msg_idx * sizeof(struct bus_message)];
+            aws_linked_list_push_back(&impl->shared_state.free, &msg->list_node);
         }
     }
 
     /* init subscription table */
     if (aws_hash_table_init(
-            &impl->slots.table, bus->allocator, 8, aws_hash_ptr, aws_ptr_eq, NULL, s_bus_destroy_listener_list)) {
+            &impl->shared_state.table, allocator, 8, aws_hash_ptr, aws_ptr_eq, NULL, s_bus_destroy_listener_list)) {
         AWS_LOGF_ERROR(
             AWS_LS_COMMON_BUS,
             "bus %p: Unable to initialize bus addressing table: %s",
-            (void *)bus,
+            (void *)&impl->base,
             aws_error_name(aws_last_error()));
         goto error;
     }
 
     /* Setup dispatch thread */
-    if (aws_condition_variable_init(&impl->dispatch.notify)) {
+    if (aws_condition_variable_init(&impl->shared_state.notify)) {
         AWS_LOGF_ERROR(
             AWS_LS_COMMON_BUS,
             "bus %p: Unable to initialize async notify: %s",
-            (void *)bus,
+            (void *)&impl->base,
             aws_error_name(aws_last_error()));
         goto error;
     }
 
-    if (aws_thread_init(&impl->dispatch.thread, bus->allocator)) {
+    if (aws_thread_init(&impl->thread, allocator)) {
         AWS_LOGF_ERROR(
             AWS_LS_COMMON_BUS,
             "bus %p: Unable to initialize background thread: %s",
-            (void *)bus,
+            (void *)&impl->base,
             aws_error_name(aws_last_error()));
         goto error;
     }
 
-    impl->dispatch.running = true;
-    aws_atomic_init_int(&impl->dispatch.started, 0);
-    aws_atomic_init_int(&impl->dispatch.exited, 0);
-    if (aws_thread_launch(&impl->dispatch.thread, s_bus_async_deliver, bus, aws_default_thread_options())) {
+    impl->shared_state.state = AWS_BAS_RUNNING;
+    if (aws_thread_launch(&impl->thread, s_bus_async_thread_fn, &impl->base, aws_default_thread_options())) {
         AWS_LOGF_ERROR(
             AWS_LS_COMMON_BUS,
             "bus %p: Unable to launch delivery thread: %s",
-            (void *)bus,
+            (void *)&impl->base,
             aws_error_name(aws_last_error()));
         goto error;
     }
 
-    /* wait for dispatch thread to start before returning control */
-    AWS_LOGF_TRACE(AWS_LS_COMMON_BUS, "bus %p: Waiting for delivery thread to start", (void *)bus);
-    while (!aws_atomic_load_int(&impl->dispatch.started)) {
-        aws_thread_current_sleep(1000 * 1000);
-    }
-    AWS_LOGF_TRACE(AWS_LS_COMMON_BUS, "bus %p: Delivery thread started", (void *)bus);
-
-    return;
+    return &impl->base;
 
 error:
-    aws_thread_clean_up(&impl->dispatch.thread);
-    aws_condition_variable_clean_up(&impl->dispatch.notify);
-    aws_hash_table_clean_up(&impl->slots.table);
-    aws_mem_release(bus->allocator, &impl->queue.buffer);
-    aws_mutex_clean_up(&impl->queue.mutex);
-    aws_mem_release(bus->allocator, impl);
-    bus->impl = NULL;
+    aws_thread_clean_up(&impl->thread);
+    aws_condition_variable_clean_up(&impl->shared_state.notify);
+    aws_hash_table_clean_up(&impl->shared_state.table);
+
+    if (impl->message_buffer_start != NULL) {
+        aws_mem_release(allocator, impl->message_buffer_start);
+    }
+
+    aws_mutex_clean_up(&impl->shared_state.mutex);
+    aws_mem_release(allocator, impl);
+
+    return NULL;
 }
 
 /*
  * Public API
  */
-struct aws_bus *aws_bus_new(struct aws_allocator *allocator, const struct aws_bus_options *options) {
-    struct aws_bus *bus = aws_mem_calloc(allocator, 1, sizeof(struct aws_bus));
-    bus->allocator = allocator;
-
-    switch (options->policy) {
-        case AWS_BUS_ASYNC_RELIABLE:
-        case AWS_BUS_ASYNC_UNRELIABLE:
-            s_bus_async_init(bus, options);
-            break;
-        case AWS_BUS_SYNC_RELIABLE:
-            s_bus_sync_init(bus, options);
-            break;
-    }
-
-    if (!bus->impl) {
-        aws_mem_release(allocator, bus);
-        return NULL;
-    }
-
-    return bus;
-}
 
 void aws_bus_destroy(struct aws_bus *bus) {
     struct bus_vtable *vtable = bus->impl;
@@ -704,19 +803,16 @@ void aws_bus_destroy(struct aws_bus *bus) {
     aws_mem_release(bus->allocator, bus);
 }
 
-int aws_bus_subscribe(struct aws_bus *bus, uint64_t address, aws_bus_listener_fn *listener, void *user_data) {
-    struct bus_vtable *vtable = bus->impl;
-    return vtable->subscribe(bus, address, listener, user_data);
+int aws_bus_subscribe(struct aws_bus *bus, const struct aws_bus_subscribe_options *options) {
+    return bus->vtable->subscribe(bus, options);
 }
 
-void aws_bus_unsubscribe(struct aws_bus *bus, uint64_t address, aws_bus_listener_fn *listener, void *user_data) {
-    struct bus_vtable *vtable = bus->impl;
-    vtable->unsubscribe(bus, address, listener, user_data);
+void aws_bus_unsubscribe(struct aws_bus *bus, const struct aws_bus_unsubscribe_options *options) {
+    bus->vtable->unsubscribe(bus, options);
 }
 
-int aws_bus_send(struct aws_bus *bus, uint64_t address, void *payload, void (*destructor)(void *)) {
-    struct bus_vtable *vtable = bus->impl;
-    return vtable->send(bus, address, payload, destructor);
+int aws_bus_publish(struct aws_bus *bus, const struct aws_bus_publish_options *options) {
+    return bus->vtable->publish(bus, options);
 }
 
 #ifdef _MSC_VER

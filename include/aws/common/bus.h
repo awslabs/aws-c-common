@@ -21,20 +21,36 @@
  */
 struct aws_bus;
 
-enum aws_bus_policy {
+/**
+ * Current state of an async bus implementation
+ */
+enum aws_bus_async_state {
+    AWS_BAS_INITIAL,
+    AWS_BAS_RUNNING,
+    AWS_BAS_SHUTTING_DOWN,
+};
+
+struct aws_bus_async_options {
+
     /**
-     * Messages will be delivered, even if dynamic allocation is required. Default.
+     * If true, messages will be delivered, even if dynamic allocation is required.
+     * If false, only memory from the bus's internal buffer will be used (if a buffer size is supplied at bus
+     * creation time).  If the buffer is full, older buffered messages will be discarded to make room for newer
+     * messages.
      */
-    AWS_BUS_ASYNC_RELIABLE = 0x0,
+    bool reliable;
+
     /**
-     * Only memory from the bus's internal buffer will be used (if a buffer size is supplied at bus creation time).
-     * If the buffer is full, older buffered messages will be discarded to make room for newer messages.
+     * Size of buffer for unreliable message delivery queue. Unused if reliable is true.
+     * Messages are 40 bytes. Default buffer_size is 4K. The bus will not allocate memory beyond this size.
      */
-    AWS_BUS_ASYNC_UNRELIABLE = 0x1,
-    /**
-     * Message delivery is immediate, and therefore reliable by definition
-     */
-    AWS_BUS_SYNC_RELIABLE = 0x2,
+    size_t buffer_size;
+
+    /** called when the bus has been fully destroyed */
+    void (*destroy_callback_fn)(void *);
+
+    /** user data to include in callbacks */
+    void *callback_user_data;
 };
 
 /**
@@ -45,26 +61,73 @@ enum aws_bus_policy {
 #define AWS_BUS_ADDRESS_ALL ((uint64_t) - 1)
 #define AWS_BUS_ADDRESS_CLOSE 0
 
-struct aws_bus_options {
-    enum aws_bus_policy policy;
-    /**
-     * Size of buffer for unreliable message delivery queue.
-     * Unused if policy is AWS_BUS_ASYNC_RELIABLE or AWS_BUS_SYNC_RELIABLE
-     * Messages are 40 bytes. Default buffer_size is 4K. The bus will not allocate memory beyond this size.
-     */
-    size_t buffer_size;
-    /* Not supported yet, but event loop group for delivery */
-    struct aws_event_loop_group *event_loop_group;
-};
-
 /* Signature for listener callbacks */
 typedef void(aws_bus_listener_fn)(uint64_t address, const void *payload, void *user_data);
 
+/* Optional callback when unsubscribe completes. Signals the listener can be safely claned up. */
+typedef void(aws_bus_listener_unsubscribe_completion_fn)(uint64_t address, void *user_data);
+
 /**
- * Allocates and initializes a message bus
+ * Options for message subscription
+ */
+struct aws_bus_subscribe_options {
+
+    /** address to subscribe to */
+    uint64_t address;
+
+    /** callback to invoke on message publish */
+    aws_bus_listener_fn *listener_callback;
+
+    /** callback user data.  lifetime is the responsibility of the subscriber. */
+    void *user_data;
+};
+
+/**
+ * Message unsubscribe options.  Listener_fn and user_data must match an existing subscription to be successful.
+ */
+struct aws_bus_unsubscribe_options {
+
+    /** Address to unsubscribe from */
+    uint64_t address;
+
+    /** Callback that was subscribed with */
+    aws_bus_listener_fn *listener_callback;
+
+    /** Optional function that will be invoked when the unsubscribe completes.  Async only.  Ignored by the sync bus
+     * in order to avoid potential recursion issues.
+     */
+    aws_bus_listener_unsubscribe_completion_fn *unsubscribe_completion;
+
+    /** user data that was subscribed with */
+    void *user_data;
+};
+
+/**
+ * Message publish options
+ */
+struct aws_bus_publish_options {
+
+    /** Address to publish to */
+    uint64_t address;
+
+    /** Payload of the message. */
+    void *payload;
+
+    /** Destructor function of the payload.  Called after the message has been delivered to all subscribers */
+    void (*destructor)(void *);
+};
+
+/**
+ * Allocates and initializes a synchronous message bus
  */
 AWS_COMMON_API
-struct aws_bus *aws_bus_new(struct aws_allocator *allocator, const struct aws_bus_options *options);
+struct aws_bus *aws_bus_new_sync(struct aws_allocator *allocator);
+
+/**
+ * Allocates and initializes an asynchronous message bus
+ */
+AWS_COMMON_API
+struct aws_bus *aws_bus_new_async(struct aws_allocator *allocator, const struct aws_bus_async_options *options);
 
 /**
  * Cleans up a message bus, including notifying all remaining listeners to close
@@ -73,10 +136,10 @@ AWS_COMMON_API
 void aws_bus_destroy(struct aws_bus *bus);
 
 /**
- * Subscribes a listener to a message type. user_data's lifetime is the responsibility of the subscriber.
+ * Subscribes a listener to a message type.
  */
 AWS_COMMON_API
-int aws_bus_subscribe(struct aws_bus *bus, uint64_t address, aws_bus_listener_fn *listener, void *user_data);
+int aws_bus_subscribe(struct aws_bus *bus, const struct aws_bus_subscribe_options *options);
 
 /**
  * Unsubscribe a listener from a specific message. This is only necessary if the listener has lifetime concerns.
@@ -84,7 +147,7 @@ int aws_bus_subscribe(struct aws_bus *bus, uint64_t address, aws_bus_listener_fn
  * can be cleaned up if necessary and the listener will never be called again.
  */
 AWS_COMMON_API
-void aws_bus_unsubscribe(struct aws_bus *bus, uint64_t address, aws_bus_listener_fn *listener, void *user_data);
+void aws_bus_unsubscribe(struct aws_bus *bus, const struct aws_bus_unsubscribe_options *options);
 
 /**
  * Sends a message to any listeners. payload will live until delivered, and then the destructor (if
@@ -92,6 +155,6 @@ void aws_bus_unsubscribe(struct aws_bus *bus, uint64_t address, aws_bus_listener
  * Will return AWS_OP_ERR if the bus is closing/has been closed
  */
 AWS_COMMON_API
-int aws_bus_send(struct aws_bus *bus, uint64_t address, void *payload, void (*destructor)(void *));
+int aws_bus_publish(struct aws_bus *bus, const struct aws_bus_publish_options *options);
 
 #endif /* AWS_COMMON_BUS_H */
