@@ -35,7 +35,7 @@
 #define AWS_BUS_DEFAULT_UNRELIABLE_BUFFER_SIZE 4096
 
 struct bus_vtable {
-    void (*clean_up)(struct aws_bus *bus);
+    void (*destroy)(struct aws_bus *bus);
 
     int (*publish)(struct aws_bus *bus, const struct aws_bus_publish_options *options);
 
@@ -209,7 +209,7 @@ struct bus_sync_impl {
     } slots;
 };
 
-static void s_bus_sync_clean_up(struct aws_bus *bus) {
+static void s_bus_sync_destroy(struct aws_bus *bus) {
     struct bus_sync_impl *impl = bus->impl;
     aws_hash_table_clean_up(&impl->slots.table);
     aws_mem_release(bus->allocator, impl);
@@ -241,7 +241,7 @@ static void s_bus_sync_unsubscribe(struct aws_bus *bus, const struct aws_bus_uns
 }
 
 static struct bus_vtable bus_sync_vtable = {
-    .clean_up = s_bus_sync_clean_up,
+    .destroy = s_bus_sync_destroy,
     .publish = s_bus_sync_publish,
     .subscribe = s_bus_sync_subscribe,
     .unsubscribe = s_bus_sync_unsubscribe,
@@ -369,7 +369,7 @@ static struct bus_message *s_bus_async_alloc_message_unreliable(struct aws_bus *
         struct bus_message *msg = AWS_CONTAINER_OF(msg_node, struct bus_message, list_node);
         s_bus_async_free_message_unreliable(bus, msg);
 
-        return msg;
+        return s_bus_async_alloc_message_unreliable(bus);
     }
 
     return NULL;
@@ -423,21 +423,24 @@ static void s_bus_async_deliver_messages(struct aws_bus *bus, struct aws_linked_
             .payload = msg->publish_options.payload,
         };
         s_bus_deliver_msg(bus, &impl->shared_state.table, &event);
-        if (reliable) {
-            s_bus_async_free_message_reliable(bus, msg);
-        }
     }
 
     if (!reliable) {
         /* push all pending messages back on the free list */
         aws_mutex_lock(&impl->shared_state.mutex);
-        {
-            while (!aws_linked_list_empty(pending_msgs)) {
-                msg_node = aws_linked_list_pop_front(pending_msgs);
-                struct bus_message *msg = AWS_CONTAINER_OF(msg_node, struct bus_message, list_node);
-                s_bus_async_free_message_unreliable(bus, msg);
-            }
+    }
+
+    while (!aws_linked_list_empty(pending_msgs)) {
+        msg_node = aws_linked_list_pop_front(pending_msgs);
+        struct bus_message *msg = AWS_CONTAINER_OF(msg_node, struct bus_message, list_node);
+        if (reliable) {
+            s_bus_async_free_message_reliable(bus, msg);
+        } else {
+            s_bus_async_free_message_unreliable(bus, msg);
         }
+    }
+
+    if (!reliable) {
         aws_mutex_unlock(&impl->shared_state.mutex);
     }
 }
@@ -690,14 +693,14 @@ static void s_bus_async_unsubscribe(struct aws_bus *bus, const struct aws_bus_un
 }
 
 static struct bus_vtable bus_async_reliable_vtable = {
-    .clean_up = s_aws_bus_async_destroy_async,
+    .destroy = s_aws_bus_async_destroy_async,
     .publish = s_bus_async_publish_reliable,
     .subscribe = s_bus_async_subscribe,
     .unsubscribe = s_bus_async_unsubscribe,
 };
 
 static struct bus_vtable bus_async_unreliable_vtable = {
-    .clean_up = s_aws_bus_async_destroy_async,
+    .destroy = s_aws_bus_async_destroy_async,
     .publish = s_bus_async_publish_unreliable,
     .subscribe = s_bus_async_subscribe,
     .unsubscribe = s_bus_async_unsubscribe,
@@ -730,7 +733,7 @@ struct aws_bus *aws_bus_new_async(struct aws_allocator *allocator, const struct 
     aws_linked_list_init(&impl->shared_state.subs);
 
     /* push as many bus_messages as we can into the free list from the buffer */
-    if (options->reliable) {
+    if (!options->reliable) {
         size_t buffer_size = options->buffer_size;
         size_t message_count = options->buffer_size / sizeof(struct bus_message);
         if (message_count == 0) {
@@ -810,9 +813,8 @@ error:
  */
 
 void aws_bus_destroy(struct aws_bus *bus) {
-    struct bus_vtable *vtable = bus->impl;
-    vtable->clean_up(bus);
-    aws_mem_release(bus->allocator, bus);
+    struct bus_vtable *vtable = bus->vtable;
+    vtable->destroy(bus);
 }
 
 int aws_bus_subscribe(struct aws_bus *bus, const struct aws_bus_subscribe_options *options) {
