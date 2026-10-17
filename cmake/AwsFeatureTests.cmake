@@ -51,7 +51,7 @@ check_c_source_compiles("
 
 check_c_source_compiles("
     int main() {
-#if !(defined(__x86_64__) || defined(__i386__) || defined(_M_X64) || defined(_M_IX86))
+#if !(defined(__x86_64__) || defined(__i386__) || defined(_M_X64) || defined(_M_IX86)) || defined(_M_ARM64EC_) || defined(_ARM64EC_)
 #    error \"not intel\"
 #endif
         return 0;
@@ -60,7 +60,7 @@ check_c_source_compiles("
 
 check_c_source_compiles("
     int main() {
-#if !(defined(__x86_64__) || defined(_M_X64))
+#if !(defined(__x86_64__) || defined(_M_X64)) || defined(_M_ARM64EC_) || defined(_ARM64EC_)
 #    error \"not intel\"
 #endif
         return 0;
@@ -69,7 +69,7 @@ check_c_source_compiles("
 
 check_c_source_compiles("
     int main() {
-#if !(defined(__aarch64__) || defined(_M_ARM64))
+#if !(defined(__aarch64__) || defined(_M_ARM64) || defined(_M_ARM64EC_) || defined(_ARM64EC_))
 #    error \"not arm64\"
 #endif
         return 0;
@@ -119,7 +119,7 @@ int main() {
     return 1;
 }" AWS_HAVE_LINUX_IF_LINK_H)
 
-if(MSVC)
+if(MSVC AND NOT CMAKE_GENERATOR_PLATFORM STREQUAL "ARM64EC")
     check_c_source_compiles("
     #include <intrin.h>
     int main() {
