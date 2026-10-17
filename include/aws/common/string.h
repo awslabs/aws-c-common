@@ -181,7 +181,7 @@ bool aws_string_eq(const struct aws_string *a, const struct aws_string *b);
  * Returns true if bytes of string are equivalent, using a case-insensitive comparison.
  */
 AWS_COMMON_API
-bool aws_string_eq_ignore_case(const struct aws_string *a, const struct aws_string *b);
+bool aws_string_eq_ignore_case(const struct aws_string *a, const struct aws_string *b, bool strict);
 
 /**
  * Returns true if bytes of string and cursor are the same, false otherwise.
@@ -373,6 +373,13 @@ bool aws_c_string_is_valid(const char *str);
  */
 AWS_STATIC_IMPL
 bool aws_char_is_space(uint8_t c);
+
+/**
+ * Returns true if the string consists solely of ASCII space characters, or is
+ * empty.
+ */
+AWS_COMMON_API
+bool aws_string_is_all_spaces(const struct aws_string *str);
 
 AWS_EXTERN_C_END
 

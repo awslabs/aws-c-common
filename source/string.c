@@ -302,7 +302,8 @@ bool aws_string_eq(const struct aws_string *a, const struct aws_string *b) {
 /**
  * Returns true if bytes of string are equivalent, using a case-insensitive comparison.
  */
-bool aws_string_eq_ignore_case(const struct aws_string *a, const struct aws_string *b) {
+bool aws_string_eq_ignore_case(const struct aws_string *a, const struct aws_string *b, bool strict) {
+    (void)strict;
     AWS_PRECONDITION(!a || aws_string_is_valid(a));
     AWS_PRECONDITION(!b || aws_string_is_valid(b));
     if (a == b) {
@@ -454,4 +455,14 @@ int aws_secure_strlen(const char *str, size_t max_read_len, size_t *str_len) {
     }
 
     return aws_raise_error(AWS_ERROR_C_STRING_BUFFER_NOT_NULL_TERMINATED);
+}
+
+bool aws_string_is_all_spaces(const struct aws_string *str) {
+    AWS_PRECONDITION(aws_string_is_valid(str));
+    for (size_t i = 0; i < str->len; ++i) {
+        if (!aws_char_is_space(str->bytes[i])) {
+            return false;
+        }
+    }
+    return true;
 }
