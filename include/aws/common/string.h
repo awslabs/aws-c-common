@@ -374,6 +374,13 @@ bool aws_c_string_is_valid(const char *str);
 AWS_STATIC_IMPL
 bool aws_char_is_space(uint8_t c);
 
+/**
+ * Returns true if the string consists solely of ASCII space characters, or is
+ * empty.
+ */
+AWS_COMMON_API
+bool aws_string_is_all_spaces(const struct aws_string *str);
+
 AWS_EXTERN_C_END
 
 #ifndef AWS_NO_STATIC_IMPL
