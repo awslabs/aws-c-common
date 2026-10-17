@@ -181,7 +181,7 @@ bool aws_string_eq(const struct aws_string *a, const struct aws_string *b);
  * Returns true if bytes of string are equivalent, using a case-insensitive comparison.
  */
 AWS_COMMON_API
-bool aws_string_eq_ignore_case(const struct aws_string *a, const struct aws_string *b);
+bool aws_string_eq_ignore_case(const struct aws_string *a, const struct aws_string *b, bool strict);
 
 /**
  * Returns true if bytes of string and cursor are the same, false otherwise.
