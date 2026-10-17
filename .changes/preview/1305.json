@@ -1,5 +1,1 @@
-{
-  "pr": 1305,
-  "type": "feat",
-  "summary": "Add aws_string_is_all_spaces"
-}
+"feat: add SSO"
