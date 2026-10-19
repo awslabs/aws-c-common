@@ -13,8 +13,8 @@ AWS_PUSH_SANE_WARNING_LEVEL
  * Arbitrary-precision signed integer. The magnitude of every value is limited to 2048 bytes (256 64-bit words), that is
  * |v| < 2^16384, which is at most 4,933 decimal digits (but some numbers of that digit length are over magnitude).
  *
- * Big integers do not have arithmetic support, you can use aws_big_integer_to_str to export a value into another
- * library to do so.
+ * Big integers do not have arithmetic support, you can use aws_byte_buf_append_big_integer to export a value into
+ * another library to do so.
  */
 struct aws_big_integer;
 
@@ -95,7 +95,7 @@ size_t aws_big_integer_max_strlen(const struct aws_big_integer *v);
  * on failure.
  */
 AWS_COMMON_API
-int aws_big_integer_to_str(const struct aws_big_integer *v, struct aws_byte_buf *out);
+int aws_byte_buf_append_big_integer(struct aws_byte_buf *out, const struct aws_big_integer *v);
 
 /**
  * Creates a big decimal with value = mantissa * 10^exponent. The returned big decimal allocates a copy of the mantissa.
@@ -145,8 +145,8 @@ bool aws_big_decimal_eq(const struct aws_big_decimal *a, const struct aws_big_de
 
 /**
  * Returns an upper bound on the number of bytes needed to represent the big decimal as a base-10 string with
- * aws_big_decimal_to_str(), without a null terminator. The length is a fast-computed estimate that exceeds the actual
- * number of bytes needed by at most 1.
+ * aws_byte_buf_append_big_decimal(), without a null terminator. The length is a fast-computed estimate that exceeds the
+ * actual number of bytes needed by at most 1.
  */
 AWS_COMMON_API
 size_t aws_big_decimal_max_strlen(const struct aws_big_decimal *v);
@@ -161,7 +161,7 @@ size_t aws_big_decimal_max_strlen(const struct aws_big_decimal *v);
  * on failure.
  */
 AWS_COMMON_API
-int aws_big_decimal_to_str(const struct aws_big_decimal *v, struct aws_byte_buf *out);
+int aws_byte_buf_append_big_decimal(struct aws_byte_buf *out, const struct aws_big_decimal *v);
 
 AWS_EXTERN_C_END
 AWS_POP_SANE_WARNING_LEVEL

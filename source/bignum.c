@@ -410,7 +410,7 @@ size_t aws_big_integer_max_strlen(const struct aws_big_integer *v) {
     return max_digits + (v->is_negative ? 1 : 0);
 }
 
-int aws_big_integer_to_str(const struct aws_big_integer *v, struct aws_byte_buf *out) {
+int aws_byte_buf_append_big_integer(struct aws_byte_buf *out, const struct aws_big_integer *v) {
     AWS_PRECONDITION(v);
     AWS_PRECONDITION(aws_byte_buf_is_valid(out));
 
@@ -551,7 +551,7 @@ size_t aws_big_decimal_max_strlen(const struct aws_big_decimal *v) {
     return aws_big_integer_max_strlen(&v->mantissa) + 1 + exponent_len;
 }
 
-int aws_big_decimal_to_str(const struct aws_big_decimal *v, struct aws_byte_buf *out) {
+int aws_byte_buf_append_big_decimal(struct aws_byte_buf *out, const struct aws_big_decimal *v) {
     AWS_PRECONDITION(v);
     AWS_PRECONDITION(aws_byte_buf_is_valid(out));
 

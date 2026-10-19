@@ -593,7 +593,7 @@ static int s_check_big_integer_cbor(struct aws_allocator *allocator, const char 
 
     struct aws_byte_buf str;
     ASSERT_SUCCESS(aws_byte_buf_init(&str, allocator, 16));
-    ASSERT_SUCCESS(aws_big_integer_to_str(decoded, &str));
+    ASSERT_SUCCESS(aws_byte_buf_append_big_integer(&str, decoded));
     ASSERT_CURSOR_VALUE_CSTRING_EQUALS(aws_byte_cursor_from_buf(&str), input, "input: %s", input);
 
     aws_byte_buf_clean_up(&str);
@@ -683,7 +683,7 @@ static int s_check_decode_big_integer(struct aws_allocator *allocator, const cha
 
     struct aws_byte_buf str;
     ASSERT_SUCCESS(aws_byte_buf_init(&str, allocator, 16));
-    ASSERT_SUCCESS(aws_big_integer_to_str(value, &str));
+    ASSERT_SUCCESS(aws_byte_buf_append_big_integer(&str, value));
     ASSERT_CURSOR_VALUE_CSTRING_EQUALS(aws_byte_cursor_from_buf(&str), expected, "hex: %s", hex);
 
     aws_byte_buf_clean_up(&str);
@@ -817,7 +817,7 @@ CBOR_TEST_CASE(cbor_decode_big_integer_errors_test) {
     ASSERT_INT_EQUALS(-1, aws_big_integer_get_sign(value));
     struct aws_byte_buf minus_one;
     ASSERT_SUCCESS(aws_byte_buf_init(&minus_one, allocator, 2));
-    ASSERT_SUCCESS(aws_big_integer_to_str(value, &minus_one));
+    ASSERT_SUCCESS(aws_byte_buf_append_big_integer(&minus_one, value));
     ASSERT_CURSOR_VALUE_CSTRING_EQUALS(aws_byte_cursor_from_buf(&minus_one), "-1");
     aws_byte_buf_clean_up(&minus_one);
     aws_big_integer_destroy(value);
@@ -857,7 +857,7 @@ static int s_check_big_decimal_cbor(
 
     struct aws_byte_buf str;
     ASSERT_SUCCESS(aws_byte_buf_init(&str, allocator, 16));
-    ASSERT_SUCCESS(aws_big_decimal_to_str(decoded, &str));
+    ASSERT_SUCCESS(aws_byte_buf_append_big_decimal(&str, decoded));
     ASSERT_CURSOR_VALUE_CSTRING_EQUALS(aws_byte_cursor_from_buf(&str), expected_str, "input: %s", input);
 
     aws_byte_buf_clean_up(&str);
@@ -908,7 +908,7 @@ static int s_check_decode_big_decimal(struct aws_allocator *allocator, const cha
 
     struct aws_byte_buf str;
     ASSERT_SUCCESS(aws_byte_buf_init(&str, allocator, 16));
-    ASSERT_SUCCESS(aws_big_decimal_to_str(value, &str));
+    ASSERT_SUCCESS(aws_byte_buf_append_big_decimal(&str, value));
     ASSERT_CURSOR_VALUE_CSTRING_EQUALS(aws_byte_cursor_from_buf(&str), expected_str, "hex: %s", hex);
 
     uint64_t next = 0;
@@ -1217,7 +1217,7 @@ CBOR_TEST_CASE(cbor_encode_decode_big_in_container_test) {
     ASSERT_INT_EQUALS(-2, aws_big_decimal_get_exponent(decoded_decimal));
     struct aws_byte_buf str;
     ASSERT_SUCCESS(aws_byte_buf_init(&str, allocator, 16));
-    ASSERT_SUCCESS(aws_big_decimal_to_str(decoded_decimal, &str));
+    ASSERT_SUCCESS(aws_byte_buf_append_big_decimal(&str, decoded_decimal));
     ASSERT_CURSOR_VALUE_CSTRING_EQUALS(aws_byte_cursor_from_buf(&str), "150e-2");
     aws_byte_buf_clean_up(&str);
     aws_big_decimal_destroy(decoded_decimal);

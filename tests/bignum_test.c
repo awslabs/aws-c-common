@@ -46,7 +46,7 @@ static int s_check_big_integer_round_trip(struct aws_allocator *allocator, const
 
     struct aws_byte_buf out;
     ASSERT_SUCCESS(aws_byte_buf_init(&out, allocator, 1));
-    ASSERT_SUCCESS(aws_big_integer_to_str(v, &out));
+    ASSERT_SUCCESS(aws_byte_buf_append_big_integer(&out, v));
     ASSERT_CURSOR_VALUE_CSTRING_EQUALS(aws_byte_cursor_from_buf(&out), expected, "input: %s", input);
 
     struct aws_big_integer *reparsed = aws_big_integer_new_from_cursor(allocator, aws_byte_cursor_from_buf(&out));
@@ -197,18 +197,18 @@ static int s_big_integer_to_str_buffer_fn(struct aws_allocator *allocator, void 
     // appends to existing content
     struct aws_byte_buf dynamic;
     ASSERT_SUCCESS(aws_byte_buf_init_copy_from_cursor(&dynamic, allocator, aws_byte_cursor_from_c_str("n=")));
-    ASSERT_SUCCESS(aws_big_integer_to_str(v, &dynamic));
+    ASSERT_SUCCESS(aws_byte_buf_append_big_integer(&dynamic, v));
     ASSERT_CURSOR_VALUE_CSTRING_EQUALS(aws_byte_cursor_from_buf(&dynamic), "n=-12345");
     aws_byte_buf_clean_up(&dynamic);
 
     // fixed buffer that is one byte short is left untouched
     uint8_t storage[6];
     struct aws_byte_buf fixed = aws_byte_buf_from_empty_array(storage, 5);
-    ASSERT_ERROR(AWS_ERROR_DEST_COPY_TOO_SMALL, aws_big_integer_to_str(v, &fixed));
+    ASSERT_ERROR(AWS_ERROR_DEST_COPY_TOO_SMALL, aws_byte_buf_append_big_integer(&fixed, v));
     ASSERT_UINT_EQUALS(0, fixed.len);
 
     fixed = aws_byte_buf_from_empty_array(storage, sizeof(storage));
-    ASSERT_SUCCESS(aws_big_integer_to_str(v, &fixed));
+    ASSERT_SUCCESS(aws_byte_buf_append_big_integer(&fixed, v));
     ASSERT_CURSOR_VALUE_CSTRING_EQUALS(aws_byte_cursor_from_buf(&fixed), "-12345");
 
     aws_big_integer_destroy(v);
@@ -221,7 +221,7 @@ AWS_TEST_CASE(big_integer_to_str_buffer, s_big_integer_to_str_buffer_fn)
 static int s_check_to_str_all_buffers(struct aws_allocator *allocator, const struct aws_big_integer *v) {
     struct aws_byte_buf grown;
     ASSERT_SUCCESS(aws_byte_buf_init(&grown, allocator, 0));
-    ASSERT_SUCCESS(aws_big_integer_to_str(v, &grown));
+    ASSERT_SUCCESS(aws_byte_buf_append_big_integer(&grown, v));
 
     size_t len = grown.len;
 
@@ -234,7 +234,7 @@ static int s_check_to_str_all_buffers(struct aws_allocator *allocator, const str
     ASSERT_SUCCESS(aws_byte_buf_init(&fixed, allocator, len + 1));
     fixed.allocator = NULL;
     fixed.capacity = len;
-    ASSERT_SUCCESS(aws_big_integer_to_str(v, &fixed));
+    ASSERT_SUCCESS(aws_byte_buf_append_big_integer(&fixed, v));
     ASSERT_TRUE(aws_byte_buf_eq(&grown, &fixed));
     uint8_t *fixed_storage = fixed.buffer;
     fixed.capacity = len - 1;
@@ -243,7 +243,7 @@ static int s_check_to_str_all_buffers(struct aws_allocator *allocator, const str
         // a zero capacity byte buf with a non-NULL buffer is not a valid byte buf
         fixed.buffer = NULL;
     }
-    ASSERT_ERROR(AWS_ERROR_DEST_COPY_TOO_SMALL, aws_big_integer_to_str(v, &fixed));
+    ASSERT_ERROR(AWS_ERROR_DEST_COPY_TOO_SMALL, aws_byte_buf_append_big_integer(&fixed, v));
     ASSERT_UINT_EQUALS(0, fixed.len);
     aws_mem_release(allocator, fixed_storage);
 
@@ -381,7 +381,7 @@ static int s_big_integer_magnitude_vectors_fn(struct aws_allocator *allocator, v
 
             struct aws_byte_buf str;
             ASSERT_SUCCESS(aws_byte_buf_init(&str, allocator, 1));
-            ASSERT_SUCCESS(aws_big_integer_to_str(v, &str));
+            ASSERT_SUCCESS(aws_byte_buf_append_big_integer(&str, v));
             ASSERT_CURSOR_VALUE_CSTRING_EQUALS(aws_byte_cursor_from_buf(&str), c->decimal, "case %zu", i);
             aws_byte_buf_clean_up(&str);
             aws_big_integer_destroy(v);
@@ -466,7 +466,7 @@ static int s_big_integer_magnitude_round_trip_fn(struct aws_allocator *allocator
 
             struct aws_byte_buf str;
             ASSERT_SUCCESS(aws_byte_buf_init(&str, allocator, 1));
-            ASSERT_SUCCESS(aws_big_integer_to_str(from_bytes, &str));
+            ASSERT_SUCCESS(aws_byte_buf_append_big_integer(&str, from_bytes));
 
             struct aws_big_integer *from_str =
                 aws_big_integer_new_from_cursor(allocator, aws_byte_cursor_from_buf(&str));
@@ -518,7 +518,7 @@ static int s_check_big_decimal_round_trip(struct aws_allocator *allocator, const
 
     struct aws_byte_buf out;
     ASSERT_SUCCESS(aws_byte_buf_init(&out, allocator, 1));
-    ASSERT_SUCCESS(aws_big_decimal_to_str(v, &out));
+    ASSERT_SUCCESS(aws_byte_buf_append_big_decimal(&out, v));
     ASSERT_CURSOR_VALUE_CSTRING_EQUALS(aws_byte_cursor_from_buf(&out), expected, "input: %s", input);
 
     struct aws_big_decimal *reparsed = aws_big_decimal_new_from_cursor(allocator, aws_byte_cursor_from_buf(&out));
@@ -686,11 +686,12 @@ static int s_big_decimal_to_str_buffer_fn(struct aws_allocator *allocator, void 
 
         uint8_t storage[32];
         struct aws_byte_buf fixed = aws_byte_buf_from_empty_array(storage, expected_len - 1);
-        ASSERT_ERROR(AWS_ERROR_DEST_COPY_TOO_SMALL, aws_big_decimal_to_str(v, &fixed), "input: %s", cases[i].input);
+        ASSERT_ERROR(
+            AWS_ERROR_DEST_COPY_TOO_SMALL, aws_byte_buf_append_big_decimal(&fixed, v), "input: %s", cases[i].input);
         ASSERT_UINT_EQUALS(0, fixed.len);
 
         fixed = aws_byte_buf_from_empty_array(storage, expected_len);
-        ASSERT_SUCCESS(aws_big_decimal_to_str(v, &fixed));
+        ASSERT_SUCCESS(aws_byte_buf_append_big_decimal(&fixed, v));
         ASSERT_CURSOR_VALUE_CSTRING_EQUALS(aws_byte_cursor_from_buf(&fixed), cases[i].expected);
 
         aws_big_decimal_destroy(v);
@@ -746,13 +747,13 @@ static int s_big_decimal_to_str_append_fn(struct aws_allocator *allocator, void 
 
     struct aws_byte_buf dynamic;
     ASSERT_SUCCESS(aws_byte_buf_init_copy_from_cursor(&dynamic, allocator, aws_byte_cursor_from_c_str("x=")));
-    ASSERT_SUCCESS(aws_big_decimal_to_str(v, &dynamic));
+    ASSERT_SUCCESS(aws_byte_buf_append_big_decimal(&dynamic, v));
     ASSERT_CURSOR_VALUE_CSTRING_EQUALS(aws_byte_cursor_from_buf(&dynamic), "x=-12345e-2");
 
     uint8_t storage[16] = {'x', '='};
     struct aws_byte_buf fixed = aws_byte_buf_from_empty_array(storage, sizeof(storage));
     fixed.len = 2;
-    ASSERT_SUCCESS(aws_big_decimal_to_str(v, &fixed));
+    ASSERT_SUCCESS(aws_byte_buf_append_big_decimal(&fixed, v));
     ASSERT_CURSOR_VALUE_CSTRING_EQUALS(aws_byte_cursor_from_buf(&fixed), "x=-12345e-2");
 
     aws_byte_buf_clean_up(&dynamic);
@@ -790,7 +791,7 @@ static int s_big_limits_fn(struct aws_allocator *allocator, void *ctx) {
     ASSERT_NOT_NULL(largest);
     struct aws_byte_buf largest_str;
     ASSERT_SUCCESS(aws_byte_buf_init(&largest_str, allocator, 1));
-    ASSERT_SUCCESS(aws_big_integer_to_str(largest, &largest_str));
+    ASSERT_SUCCESS(aws_byte_buf_append_big_integer(&largest_str, largest));
     ASSERT_UINT_EQUALS(MAX_DIGITS, largest_str.len);
     ASSERT_UINT_EQUALS('5', largest_str.buffer[largest_str.len - 1]); // 2^16384 ends in 6
 
@@ -963,7 +964,7 @@ static int s_big_decimal_new_fn(struct aws_allocator *allocator, void *ctx) {
             // It round trips through a string
             struct aws_byte_buf str;
             ASSERT_SUCCESS(aws_byte_buf_init(&str, allocator, 1));
-            ASSERT_SUCCESS(aws_big_decimal_to_str(decimal, &str));
+            ASSERT_SUCCESS(aws_byte_buf_append_big_decimal(&str, decimal));
             struct aws_big_decimal *parsed = aws_big_decimal_new_from_cursor(allocator, aws_byte_cursor_from_buf(&str));
             ASSERT_NOT_NULL(parsed);
             ASSERT_INT_EQUALS(exponents[j], aws_big_decimal_get_exponent(parsed));
@@ -1202,7 +1203,7 @@ static int s_big_decimal_max_strlen_fn(struct aws_allocator *allocator, void *ct
 
             struct aws_byte_buf grown;
             ASSERT_SUCCESS(aws_byte_buf_init(&grown, allocator, 0));
-            ASSERT_SUCCESS(aws_big_decimal_to_str(v, &grown));
+            ASSERT_SUCCESS(aws_byte_buf_append_big_decimal(&grown, v));
 
             size_t max_strlen = aws_big_decimal_max_strlen(v);
             ASSERT_TRUE(max_strlen >= grown.len, "mantissa %s exponent %lld", mantissas[m], (long long)exponents[e]);
@@ -1213,7 +1214,7 @@ static int s_big_decimal_max_strlen_fn(struct aws_allocator *allocator, void *ct
             struct aws_byte_buf fixed;
             ASSERT_SUCCESS(aws_byte_buf_init(&fixed, allocator, max_strlen));
             fixed.allocator = NULL;
-            ASSERT_SUCCESS(aws_big_decimal_to_str(v, &fixed));
+            ASSERT_SUCCESS(aws_byte_buf_append_big_decimal(&fixed, v));
             ASSERT_TRUE(aws_byte_buf_eq(&grown, &fixed));
             aws_mem_release(allocator, fixed.buffer);
 
@@ -1233,7 +1234,7 @@ static int s_big_decimal_max_strlen_fn(struct aws_allocator *allocator, void *ct
     ASSERT_NOT_NULL(v);
     struct aws_byte_buf grown;
     ASSERT_SUCCESS(aws_byte_buf_init(&grown, allocator, 0));
-    ASSERT_SUCCESS(aws_big_decimal_to_str(v, &grown));
+    ASSERT_SUCCESS(aws_byte_buf_append_big_decimal(&grown, v));
     ASSERT_TRUE(aws_big_decimal_max_strlen(v) >= grown.len);
     ASSERT_TRUE(aws_big_decimal_max_strlen(v) <= grown.len + 1);
     aws_byte_buf_clean_up(&grown);
@@ -1314,7 +1315,7 @@ static int s_big_integer_reference_vectors_fn(struct aws_allocator *allocator, v
 
         struct aws_byte_buf str;
         ASSERT_SUCCESS(aws_byte_buf_init(&str, allocator, 1));
-        ASSERT_SUCCESS(aws_big_integer_to_str(v, &str));
+        ASSERT_SUCCESS(aws_byte_buf_append_big_integer(&str, v));
         ASSERT_UINT_EQUALS(c->expected_str_len, str.len, "case %zu", i);
         ASSERT_TRUE(c->expected_str_hash == s_fnv1a64(aws_byte_cursor_from_buf(&str)), "case %zu", i);
 
