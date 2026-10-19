@@ -3,7 +3,6 @@
 
 #include <aws/common/array_list.h>
 #include <aws/common/logging.h>
-#include <aws/common/private/big.h>
 #include <aws/common/private/byte_buf.h>
 #include <aws/common/private/external_module_impl.h>
 #include <float.h>
@@ -18,6 +17,9 @@ const static size_t s_cbor_element_width_32bit = 5;
 /* Resource limits to prevent hostile input from causing excessive allocation or stack exhaustion */
 const static uint64_t s_cbor_max_container_size = 10000;
 const static size_t s_cbor_max_nesting_depth = 128;
+
+/* Largest aws_big_integer magnitude in bytes, must match the limit in bignum.c. */
+enum { BIG_INTEGER_MAX_BYTES = 2048 };
 
 enum s_cbor_simple_val {
     AWS_CBOR_SIMPLE_VAL_FALSE = 20,
@@ -220,7 +222,7 @@ void aws_cbor_encoder_write_undefined(struct aws_cbor_encoder *encoder) {
     ENCODE_THROUGH_LIBCBOR(encoder, 1, AWS_CBOR_SIMPLE_VAL_UNDEFINED /*undefined*/, cbor_encode_ctrl);
 }
 
-// Subtracts 1 from a nonzero big-endian magnitude in place.
+/* Subtracts 1 from a nonzero big-endian magnitude in place. */
 static void s_be_decrement(uint8_t *bytes, size_t len) {
     for (size_t i = len; i-- > 0;) {
         if (bytes[i]-- != 0) {
@@ -238,7 +240,7 @@ void aws_cbor_encoder_write_big_integer(struct aws_cbor_encoder *encoder, const 
     error = aws_big_integer_get_magnitude_be(value, &buf);
     AWS_FATAL_ASSERT(error == AWS_OP_SUCCESS);
 
-    // A negative integer v is encoded as the magnitude of -1 - v, that is |v| - 1.
+    /* A negative integer v is encoded as the magnitude of -1 - v, that is |v| - 1. */
     if (is_negative) {
         s_be_decrement(buf.buffer, buf.len);
     }
@@ -272,7 +274,7 @@ void aws_cbor_encoder_write_big_decimal(struct aws_cbor_encoder *encoder, const 
     aws_cbor_encoder_write_tag(encoder, AWS_CBOR_TAG_DECIMAL_FRACTION);
     aws_cbor_encoder_write_array_start(encoder, 2);
     if (exponent < 0) {
-        // -1 - exponent, which does not overflow for INT64_MIN
+        /* -1 - exponent, which does not overflow for INT64_MIN */
         aws_cbor_encoder_write_negint(encoder, (uint64_t)(-1 - exponent));
     } else {
         aws_cbor_encoder_write_uint(encoder, (uint64_t)exponent);
@@ -811,7 +813,7 @@ static void s_cbor_decoder_snapshot_restore(struct aws_cbor_decoder *decoder, st
     decoder->cached_bytes_consumed = snapshot.cached_bytes_consumed;
 }
 
-// Creates the big integer for a CBOR integer with big-endian argument `n`: n if not negative, otherwise -1 - n.
+/* Creates the big integer for a CBOR integer with big-endian argument `n`: n if not negative, otherwise -1 - n. */
 static struct aws_big_integer *s_big_integer_from_cbor_magnitude(
     struct aws_allocator *allocator,
     struct aws_byte_cursor n,
@@ -824,13 +826,13 @@ static struct aws_big_integer *s_big_integer_from_cbor_magnitude(
         aws_byte_cursor_advance(&n, 1);
     }
 
-    // The magnitude only grows from n to n + 1, so reject here, before copying input of an unbounded size.
-    if (n.len > AWS_BIG_INTEGER_MAX_BYTES) {
+    /* The magnitude only grows from n to n + 1, so reject here, before copying input of an unbounded size. */
+    if (n.len > BIG_INTEGER_MAX_BYTES) {
         aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
         return NULL;
     }
 
-    // -1 - n is -(n + 1). The leading zero byte absorbs a carry out of the top of n.
+    /* -1 - n is -(n + 1). The leading zero byte absorbs a carry out of the top of n. */
     struct aws_byte_buf buf;
     if (aws_byte_buf_init(&buf, allocator, n.len + 1)) {
         return NULL;
@@ -920,7 +922,7 @@ int aws_cbor_decoder_pop_next_big_integer_val(struct aws_cbor_decoder *decoder, 
     return AWS_OP_SUCCESS;
 }
 
-// Pops an integer exponent of a decimal fraction.
+/* Pops an integer exponent of a decimal fraction. */
 static int s_cbor_decoder_pop_next_decimal_exponent(struct aws_cbor_decoder *decoder, int64_t *out) {
     enum aws_cbor_type type;
     if (aws_cbor_decoder_peek_type(decoder, &type)) {
@@ -961,7 +963,7 @@ static int s_cbor_decoder_pop_next_decimal_exponent(struct aws_cbor_decoder *dec
     }
 }
 
-// Pops the start of the 2-element array of a decimal fraction, which may be definite or indefinite length.
+/* Pops the start of the 2-element array of a decimal fraction, which may be definite or indefinite length. */
 static int s_cbor_decoder_pop_decimal_array_start(struct aws_cbor_decoder *decoder, bool *out_indefinite) {
     enum aws_cbor_type type;
     if (aws_cbor_decoder_peek_type(decoder, &type)) {
@@ -985,7 +987,7 @@ static int s_cbor_decoder_pop_decimal_array_start(struct aws_cbor_decoder *decod
     return AWS_OP_SUCCESS;
 }
 
-// In an indefinite-length decimal fraction array, fails if the array ends before this element.
+/* In an indefinite-length decimal fraction array, fails if the array ends before this element. */
 static int s_cbor_decoder_check_decimal_element_present(struct aws_cbor_decoder *decoder, bool indefinite) {
     if (!indefinite) {
         return AWS_OP_SUCCESS;
@@ -1002,7 +1004,7 @@ static int s_cbor_decoder_check_decimal_element_present(struct aws_cbor_decoder 
     return AWS_OP_SUCCESS;
 }
 
-// In an indefinite-length decimal fraction array, consumes the BREAK that must follow the 2 elements.
+/* In an indefinite-length decimal fraction array, consumes the BREAK that must follow the 2 elements. */
 static int s_cbor_decoder_pop_decimal_array_end(struct aws_cbor_decoder *decoder, bool indefinite) {
     if (!indefinite) {
         return AWS_OP_SUCCESS;

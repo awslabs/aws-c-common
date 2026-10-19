@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 
-#include <aws/common/big.h>
+#include <aws/common/bignum.h>
 #include <aws/common/cbor.h>
 #include <aws/common/encoding.h>
 #include <float.h>
@@ -624,8 +624,8 @@ CBOR_TEST_CASE(cbor_encode_decode_big_integer_test) {
     ASSERT_SUCCESS(s_check_big_integer_cbor(allocator, "-4722366482869645213696", "c349ffffffffffffffffff"));
     ASSERT_SUCCESS(s_check_big_integer_cbor(allocator, "-4722366482869645213697", "c34a01000000000000000000"));
 
-    // The extremes allowed by aws_big_integer: 2^32768 - 1, and -(2^32768 - 1), whose magnitude is 2^32768 - 2.
-    uint8_t max_bytes[4096];
+    // The extremes allowed by aws_big_integer: 2^16384 - 1, and -(2^16384 - 1), whose magnitude is 2^16384 - 2.
+    uint8_t max_bytes[2048];
     memset(max_bytes, 0xff, sizeof(max_bytes));
     struct aws_byte_cursor max_cursor = aws_byte_cursor_from_array(max_bytes, sizeof(max_bytes));
     struct aws_big_integer *max = aws_big_integer_new(allocator, max_cursor, false);
@@ -717,7 +717,7 @@ CBOR_TEST_CASE(cbor_decode_big_integer_errors_test) {
     (void)ctx;
     aws_common_library_init(allocator);
 
-    uint8_t data[4096 + 16];
+    uint8_t data[2048 + 16];
     struct aws_big_integer *value = NULL;
     uint64_t u64 = 0;
     struct aws_byte_cursor cursor;
@@ -765,14 +765,14 @@ CBOR_TEST_CASE(cbor_decode_big_integer_errors_test) {
     ASSERT_FAILS(aws_cbor_decoder_pop_next_big_integer_val(decoder, &value));
     ASSERT_UINT_EQUALS(AWS_ERROR_INVALID_CBOR, aws_last_error());
 
-    // Too long: 4097 bytes with a nonzero first byte. 4096 zero bytes are the value 0.
+    // Too long: 2049 bytes with a nonzero first byte. 2048 zero bytes are the value 0.
     struct aws_cbor_encoder *encoder = aws_cbor_encoder_new(allocator);
     memset(data, 0, sizeof(data));
     data[0] = 0x01;
     aws_cbor_encoder_write_tag(encoder, AWS_CBOR_TAG_UNSIGNED_BIGNUM);
-    aws_cbor_encoder_write_bytes(encoder, aws_byte_cursor_from_array(data, 4097));
+    aws_cbor_encoder_write_bytes(encoder, aws_byte_cursor_from_array(data, 2049));
     aws_cbor_encoder_write_tag(encoder, AWS_CBOR_TAG_UNSIGNED_BIGNUM);
-    aws_cbor_encoder_write_bytes(encoder, aws_byte_cursor_from_array(data + 1, 4096));
+    aws_cbor_encoder_write_bytes(encoder, aws_byte_cursor_from_array(data + 1, 2048));
     aws_cbor_decoder_reset_src(decoder, aws_cbor_encoder_get_encoded_data(encoder));
     size_t total = aws_cbor_decoder_get_remaining_length(decoder);
     ASSERT_FAILS(aws_cbor_decoder_pop_next_big_integer_val(decoder, &value));
@@ -784,22 +784,22 @@ CBOR_TEST_CASE(cbor_decode_big_integer_errors_test) {
     aws_big_integer_destroy(value);
     value = NULL;
 
-    // -1 - (2^32768 - 1) is -2^32768, outside the limits.
+    // -1 - (2^16384 - 1) is -2^16384, outside the limits.
     aws_cbor_encoder_reset(encoder);
-    memset(data, 0xff, 4096);
+    memset(data, 0xff, 2048);
     aws_cbor_encoder_write_tag(encoder, AWS_CBOR_TAG_NEGATIVE_BIGNUM);
-    aws_cbor_encoder_write_bytes(encoder, aws_byte_cursor_from_array(data, 4096));
+    aws_cbor_encoder_write_bytes(encoder, aws_byte_cursor_from_array(data, 2048));
     aws_cbor_decoder_reset_src(decoder, aws_cbor_encoder_get_encoded_data(encoder));
     ASSERT_FAILS(aws_cbor_decoder_pop_next_big_integer_val(decoder, &value));
     ASSERT_UINT_EQUALS(AWS_ERROR_INVALID_ARGUMENT, aws_last_error());
     ASSERT_NULL(value);
 
-    // A negative bignum of more than 4096 bytes is rejected without regard to its value, and the decoder is restored.
+    // A negative bignum of more than 2048 bytes is rejected without regard to its value, and the decoder is restored.
     aws_cbor_encoder_reset(encoder);
     memset(data, 0, sizeof(data));
     data[0] = 0x01;
     aws_cbor_encoder_write_tag(encoder, AWS_CBOR_TAG_NEGATIVE_BIGNUM);
-    aws_cbor_encoder_write_bytes(encoder, aws_byte_cursor_from_array(data, 4097));
+    aws_cbor_encoder_write_bytes(encoder, aws_byte_cursor_from_array(data, 2049));
     aws_cbor_decoder_reset_src(decoder, aws_cbor_encoder_get_encoded_data(encoder));
     total = aws_cbor_decoder_get_remaining_length(decoder);
     ASSERT_FAILS(aws_cbor_decoder_pop_next_big_integer_val(decoder, &value));
@@ -807,11 +807,11 @@ CBOR_TEST_CASE(cbor_decode_big_integer_errors_test) {
     ASSERT_NULL(value);
     ASSERT_UINT_EQUALS(total, aws_cbor_decoder_get_unconsumed_length(decoder));
 
-    // Leading zeros don't count towards the size: 4097 zero bytes are n = 0, which is -1.
+    // Leading zeros don't count towards the size: 2049 zero bytes are n = 0, which is -1.
     aws_cbor_encoder_reset(encoder);
     memset(data, 0, sizeof(data));
     aws_cbor_encoder_write_tag(encoder, AWS_CBOR_TAG_NEGATIVE_BIGNUM);
-    aws_cbor_encoder_write_bytes(encoder, aws_byte_cursor_from_array(data, 4097));
+    aws_cbor_encoder_write_bytes(encoder, aws_byte_cursor_from_array(data, 2049));
     aws_cbor_decoder_reset_src(decoder, aws_cbor_encoder_get_encoded_data(encoder));
     ASSERT_SUCCESS(aws_cbor_decoder_pop_next_big_integer_val(decoder, &value));
     ASSERT_INT_EQUALS(-1, aws_big_integer_get_sign(value));
@@ -1022,9 +1022,9 @@ CBOR_TEST_CASE(cbor_decode_big_decimal_errors_test) {
     return AWS_OP_SUCCESS;
 }
 
-// Decodes a decimal fraction whose mantissa is a bignum of 4097 bytes, the first of which is nonzero.
+// Decodes a decimal fraction whose mantissa is a bignum of 2049 bytes, the first of which is nonzero.
 static int s_check_oversized_decimal_mantissa(struct aws_allocator *allocator, uint64_t mantissa_tag) {
-    uint8_t mantissa[4097] = {0x01};
+    uint8_t mantissa[2049] = {0x01};
 
     struct aws_cbor_encoder *encoder = aws_cbor_encoder_new(allocator);
     aws_cbor_encoder_write_tag(encoder, AWS_CBOR_TAG_DECIMAL_FRACTION);

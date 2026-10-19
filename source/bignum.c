@@ -2,10 +2,9 @@
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0.
  */
-#include <aws/common/big.h>
+#include <aws/common/bignum.h>
 
 #include <aws/common/math.h>
-#include <aws/common/private/big.h>
 #include <aws/common/private/byte_buf.h>
 
 #include <inttypes.h>
@@ -15,8 +14,8 @@
 struct aws_big_integer {
     struct aws_allocator *allocator;
 
-    uint64_t *abs; // zero => abs == NULL && abslen == 0
-    size_t abslen; // in u64 words
+    uint32_t *abs; /* zero => abs == NULL && abslen == 0 */
+    size_t abslen; /* in u32 words */
 
     bool is_negative;
 };
@@ -26,97 +25,58 @@ struct aws_big_decimal {
     int64_t exponent;
 };
 
-// -9223372036854775808 is 20 chars + snprintf NULL
+/* -9223372036854775808 is 20 chars + snprintf NULL */
 enum { I64_MAX_BUFLEN = 21 };
 
-// bigint atoi happens in chunks of 10^19 (biggest E that fits in u64)
-enum { CHUNK_DIGITS = 19 };
-
-// 10^19 and its inverse
-static const uint64_t CHUNK_BASE = 10000000000000000000ULL;
-static const uint64_t CHUNK_BASE_RECIPROCAL = 0xd83c94fb6d2ac34aULL;
+/*
+ * Words are 32 bits so that every intermediate product, sum and quotient fits in a native uint64_t.
+ *
+ * bigint atoi/itoa happens in chunks of 10^9 (biggest E that fits in u32).
+ */
+enum {
+    CHUNK_DIGITS = 9,
+    CHUNK_BASE = 1000000000,
+};
 
 /*
  * Digit<->word conversion Horner-based i.e. O(n^2) so we impose length limits, see
  * https://nvd.nist.gov/vuln/detail/cve-2020-10735.
  *
- * The limit is primarily defined by MAX_BYTES, at 4096 that is 512 64-bit words, or ~9865 digits, compared to Python's
- * default limit of 4300. 512 words benchmarks comparably to Python at its default limit on my M3 Pro, so basically we
- * will only ever be about as slow as Python's default but we support >2x the length.
+ * The limit is primarily defined by MAX_BYTES, at 2048 that is 256 64-bit words, or ~4933 digits, compared to Python's
+ * default limit of 4300.
  *
  * If we adopt faster algorithms these limits can probably either increase or go away.
  */
 enum {
-    MAX_BYTES = AWS_BIG_INTEGER_MAX_BYTES,
-    MAX_DIGITS = 9865,
-    MAX_WORDS = MAX_BYTES / sizeof(uint64_t),
+    MAX_BYTES = 2048,
+    MAX_DIGITS = 4933,
+    MAX_WORDS = MAX_BYTES / sizeof(uint32_t),
 };
 
-// "how many u64 words do i need for this digit string"
-// int approximation of exact: ceil(digits * log2(10) / 64)
+/*
+ * "how many u32 words do i need for this digit string"
+ * int approximation of exact: ceil(digits * log2(10) / 32)
+ */
 static size_t s_max_abslen(size_t digits) {
-    uint64_t scaled = (uint64_t)digits * 217706;
+    uint64_t scaled = (uint64_t)digits * 435412;
     return (size_t)((scaled + ((UINT64_C(1) << 22) - 1)) >> 22);
 }
 
-// "how many chars do i need to stringify these u64 words" (minus sign, which is checked by caller)
-// int approximation of exact: floor(bits * log10(2)) + 1
-static size_t s_max_strlen(size_t numwords, uint64_t top_word) {
+/*
+ * "how many chars do i need to stringify these u32 words" (minus sign, which is checked by caller)
+ * int approximation of exact: floor(bits * log10(2)) + 1
+ */
+static size_t s_max_strlen(size_t numwords, uint32_t top_word) {
     if (numwords == 0) {
         return 1;
     }
 
-    uint64_t bits = ((uint64_t)(numwords - 1) * 64) + (64 - aws_clz_u64(top_word));
+    uint64_t bits = ((uint64_t)(numwords - 1) * 32) + (32 - aws_clz_u32(top_word));
     return (size_t)((bits * 78914) >> 18) + 1;
 }
 
-struct s_uint128 {
-    uint64_t hi;
-    uint64_t lo;
-};
-
-static struct s_uint128 s_mul_u128(uint64_t a, uint64_t b) {
-    const uint64_t mask = 0xffffffffULL;
-    uint64_t a_lo = a & mask;
-    uint64_t a_hi = a >> 32;
-    uint64_t b_lo = b & mask;
-    uint64_t b_hi = b >> 32;
-
-    uint64_t lo_lo = a_lo * b_lo;
-    uint64_t lo_hi = a_lo * b_hi;
-    uint64_t hi_lo = a_hi * b_lo;
-    uint64_t hi_hi = a_hi * b_hi;
-
-    uint64_t middle = (lo_lo >> 32) + (lo_hi & mask) + (hi_lo & mask);
-    struct s_uint128 result;
-    result.hi = hi_hi + (lo_hi >> 32) + (hi_lo >> 32) + (middle >> 32);
-    result.lo = (middle << 32) | (lo_lo & mask);
-    return result;
-}
-
-static struct s_uint128 s_add_u128(struct s_uint128 a, struct s_uint128 b) {
-    struct s_uint128 result;
-    result.lo = a.lo + b.lo;
-    result.hi = a.hi + b.hi + (result.lo < a.lo);
-    return result;
-}
-
-static uint64_t s_div_u128(struct s_uint128 u, uint64_t d, uint64_t v, uint64_t *remainder) {
-    struct s_uint128 q = s_add_u128(s_mul_u128(v, u.hi), u);
-    q.hi += 1;
-
-    uint64_t r = u.lo - (q.hi * d);
-    if (r > q.lo) {
-        q.hi -= 1;
-        r += d;
-    }
-    if (r >= d) {
-        q.hi += 1;
-        r -= d;
-    }
-
-    *remainder = r;
-    return q.hi;
+static bool s_is_zero_byte(uint8_t c) {
+    return c == 0;
 }
 
 static bool s_ischar(struct aws_byte_cursor *c, uint8_t v) {
@@ -149,13 +109,13 @@ static struct aws_byte_cursor s_take_digits(struct aws_byte_cursor *c) {
     return aws_byte_cursor_advance(c, len);
 }
 
-static uint64_t s_take_chunk(struct aws_byte_cursor *first, struct aws_byte_cursor *second, size_t len) {
-    uint64_t chunk = 0;
+static uint32_t s_take_chunk(struct aws_byte_cursor *first, struct aws_byte_cursor *second, size_t len) {
+    uint32_t chunk = 0;
     while (len > 0) {
         struct aws_byte_cursor *src = first->len > 0 ? first : second;
         size_t take = len < src->len ? len : src->len;
         for (size_t i = 0; i < take; ++i) {
-            chunk = (chunk * 10) + (uint64_t)(src->ptr[i] - '0');
+            chunk = (chunk * 10) + (uint32_t)(src->ptr[i] - '0');
         }
         src->ptr += take;
         src->len -= take;
@@ -199,27 +159,23 @@ static int s_big_integer_atoi(
     }
 
     size_t nchunk = (digit_count + CHUNK_DIGITS - 1) / CHUNK_DIGITS;
-    uint64_t *words = aws_mem_calloc(allocator, s_max_abslen(digit_count), sizeof(uint64_t));
-    if (words == NULL) {
-        return AWS_OP_ERR;
-    }
+    uint32_t *words = aws_mem_calloc(allocator, s_max_abslen(digit_count), sizeof(uint32_t));
 
     size_t word_count = 0;
     size_t chunk_len = digit_count % CHUNK_DIGITS == 0 ? CHUNK_DIGITS : digit_count % CHUNK_DIGITS;
     for (size_t c = 0; c < nchunk; ++c) {
         uint64_t carry = s_take_chunk(&whole, &frac, chunk_len);
         for (size_t i = 0; i < word_count; ++i) {
-            struct s_uint128 prod =
-                s_add_u128(s_mul_u128(words[i], CHUNK_BASE), (struct s_uint128){.hi = 0, .lo = carry});
-            words[i] = prod.lo;
-            carry = prod.hi;
+            uint64_t prod = ((uint64_t)words[i] * CHUNK_BASE) + carry;
+            words[i] = (uint32_t)prod;
+            carry = prod >> 32;
         }
         if (carry != 0) {
             if (word_count == MAX_WORDS) {
                 aws_mem_release(allocator, words);
                 return aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
             }
-            words[word_count++] = carry;
+            words[word_count++] = (uint32_t)carry;
         }
         chunk_len = CHUNK_DIGITS;
     }
@@ -241,11 +197,7 @@ static int s_ensure_capacity(struct aws_byte_buf *out, size_t additional) {
     return AWS_OP_SUCCESS;
 }
 
-static int s_big_integer_itoa(
-    const struct aws_big_integer *v,
-    uint8_t *region,
-    size_t region_len,
-    size_t *digits_len) {
+static int s_big_integer_itoa(const struct aws_big_integer *v, uint8_t *region, size_t region_len, size_t *digits_len) {
 
     if (v->abslen == 0) {
         if (region_len < 1) {
@@ -258,13 +210,10 @@ static int s_big_integer_itoa(
 
     size_t n = v->abslen;
 
-    // conversion algorithm is destructive to the words, we have to alloc a working copy
-    uint64_t *scratch = aws_mem_acquire(v->allocator, n * sizeof(uint64_t));
-    if (scratch == NULL) {
-        return AWS_OP_ERR;
-    }
+    /* conversion algorithm is destructive to the words, we have to alloc a working copy */
+    uint32_t *scratch = aws_mem_acquire(v->allocator, n * sizeof(uint32_t));
 
-    memcpy(scratch, v->abs, n * sizeof(uint64_t));
+    memcpy(scratch, v->abs, n * sizeof(uint32_t));
 
     int result = AWS_OP_ERR;
     size_t pos = region_len;
@@ -272,7 +221,9 @@ static int s_big_integer_itoa(
     while (count > 0) {
         uint64_t rem = 0;
         for (size_t i = count; i-- > 0;) {
-            scratch[i] = s_div_u128((struct s_uint128){.hi = rem, .lo = scratch[i]}, CHUNK_BASE, CHUNK_BASE_RECIPROCAL, &rem);
+            uint64_t cur = (rem << 32) | scratch[i];
+            scratch[i] = (uint32_t)(cur / CHUNK_BASE);
+            rem = cur % CHUNK_BASE;
         }
         while (count > 0 && scratch[count - 1] == 0) {
             --count;
@@ -347,15 +298,9 @@ struct aws_big_integer *aws_big_integer_new(
     struct aws_byte_cursor bytes,
     bool is_negative) {
     AWS_PRECONDITION(allocator);
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(&bytes));
 
-    if (!aws_byte_cursor_is_valid(&bytes)) {
-        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
-        return NULL;
-    }
-
-    while (bytes.len > 0 && bytes.ptr[0] == 0) {
-        aws_byte_cursor_advance(&bytes, 1);
-    }
+    bytes = aws_byte_cursor_left_trim_pred(&bytes, s_is_zero_byte);
 
     if (bytes.len > MAX_BYTES) {
         aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
@@ -363,25 +308,18 @@ struct aws_big_integer *aws_big_integer_new(
     }
 
     struct aws_big_integer *v = aws_mem_calloc(allocator, 1, sizeof(struct aws_big_integer));
-    if (v == NULL) {
-        return NULL;
-    }
     v->allocator = allocator;
 
     if (bytes.len == 0) {
         return v;
     }
 
-    size_t word_count = (bytes.len + 7) / 8;
-    v->abs = aws_mem_calloc(allocator, word_count, sizeof(uint64_t));
-    if (v->abs == NULL) {
-        aws_mem_release(allocator, v);
-        return NULL;
-    }
+    size_t word_count = (bytes.len + 3) / 4;
+    v->abs = aws_mem_calloc(allocator, word_count, sizeof(uint32_t));
 
     for (size_t i = 0; i < bytes.len; ++i) {
-        uint64_t byte = bytes.ptr[bytes.len - 1 - i];
-        v->abs[i / 8] |= byte << (8 * (i % 8));
+        uint32_t byte = bytes.ptr[bytes.len - 1 - i];
+        v->abs[i / 4] |= byte << (8 * (i % 4));
     }
 
     v->abslen = word_count;
@@ -393,11 +331,7 @@ struct aws_big_integer *aws_big_integer_new_from_cursor(
     struct aws_allocator *allocator,
     struct aws_byte_cursor cursor) {
     AWS_PRECONDITION(allocator);
-
-    if (!aws_byte_cursor_is_valid(&cursor)) {
-        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
-        return NULL;
-    }
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(&cursor));
 
     bool is_neg = s_take_sign(&cursor);
     struct aws_byte_cursor digits = s_take_digits(&cursor);
@@ -407,9 +341,6 @@ struct aws_big_integer *aws_big_integer_new_from_cursor(
     }
 
     struct aws_big_integer *v = aws_mem_calloc(allocator, 1, sizeof(struct aws_big_integer));
-    if (v == NULL) {
-        return NULL;
-    }
 
     struct aws_byte_cursor nil;
     AWS_ZERO_STRUCT(nil);
@@ -439,19 +370,19 @@ int aws_big_integer_get_magnitude_be(const struct aws_big_integer *v, struct aws
         return AWS_OP_SUCCESS;
     }
 
-    uint64_t top = v->abs[v->abslen - 1];
-    size_t top_bytes = 8;
+    uint32_t top = v->abs[v->abslen - 1];
+    size_t top_bytes = 4;
     while (top_bytes > 1 && (top >> (8 * (top_bytes - 1))) == 0) {
         --top_bytes;
     }
-    size_t total_bytes = ((v->abslen - 1) * 8) + top_bytes;
+    size_t total_bytes = ((v->abslen - 1) * 4) + top_bytes;
 
     if (s_ensure_capacity(out, total_bytes)) {
         return AWS_OP_ERR;
     }
 
     for (size_t i = total_bytes; i-- > 0;) {
-        aws_byte_buf_write_u8(out, (uint8_t)(v->abs[i / 8] >> (8 * (i % 8))));
+        aws_byte_buf_write_u8(out, (uint8_t)(v->abs[i / 4] >> (8 * (i % 4))));
     }
     return AWS_OP_SUCCESS;
 }
@@ -494,19 +425,12 @@ struct aws_big_decimal *aws_big_decimal_new(
     AWS_PRECONDITION(mantissa);
 
     struct aws_big_decimal *v = aws_mem_calloc(allocator, 1, sizeof(struct aws_big_decimal));
-    if (v == NULL) {
-        return NULL;
-    }
     v->mantissa.allocator = allocator;
     v->exponent = exponent;
 
     if (mantissa->abslen > 0) {
-        v->mantissa.abs = aws_mem_calloc(allocator, mantissa->abslen, sizeof(uint64_t));
-        if (v->mantissa.abs == NULL) {
-            aws_mem_release(allocator, v);
-            return NULL;
-        }
-        memcpy(v->mantissa.abs, mantissa->abs, mantissa->abslen * sizeof(uint64_t));
+        v->mantissa.abs = aws_mem_calloc(allocator, mantissa->abslen, sizeof(uint32_t));
+        memcpy(v->mantissa.abs, mantissa->abs, mantissa->abslen * sizeof(uint32_t));
         v->mantissa.abslen = mantissa->abslen;
         v->mantissa.is_negative = mantissa->is_negative;
     }
@@ -518,11 +442,7 @@ struct aws_big_decimal *aws_big_decimal_new_from_cursor(
     struct aws_allocator *allocator,
     struct aws_byte_cursor cursor) {
     AWS_PRECONDITION(allocator);
-
-    if (!aws_byte_cursor_is_valid(&cursor)) {
-        aws_raise_error(AWS_ERROR_INVALID_ARGUMENT);
-        return NULL;
-    }
+    AWS_PRECONDITION(aws_byte_cursor_is_valid(&cursor));
 
     bool is_negative = s_take_sign(&cursor);
     struct aws_byte_cursor whole = s_take_digits(&cursor);
@@ -572,7 +492,7 @@ struct aws_big_decimal *aws_big_decimal_new_from_cursor(
         return NULL;
     }
 
-    if (exp < INT64_MIN + (int64_t)frac.len) { // biasing exp would underflow
+    if (exp < INT64_MIN + (int64_t)frac.len) { /* biasing exp would underflow */
         aws_raise_error(AWS_ERROR_OVERFLOW_DETECTED);
         return NULL;
     }
@@ -580,9 +500,6 @@ struct aws_big_decimal *aws_big_decimal_new_from_cursor(
     exp -= (int64_t)frac.len;
 
     struct aws_big_decimal *v = aws_mem_calloc(allocator, 1, sizeof(struct aws_big_decimal));
-    if (v == NULL) {
-        return NULL;
-    }
 
     if (s_big_integer_atoi(&v->mantissa, allocator, is_negative, whole, frac)) {
         aws_mem_release(allocator, v);
@@ -630,7 +547,7 @@ size_t aws_big_decimal_max_strlen(const struct aws_big_decimal *v) {
         exponent_magnitude /= 10;
     } while (exponent_magnitude != 0);
 
-    // <mant w/ sign> .. e .. <exp w/ sign>
+    /* <mant w/ sign> .. e .. <exp w/ sign> */
     return aws_big_integer_max_strlen(&v->mantissa) + 1 + exponent_len;
 }
 

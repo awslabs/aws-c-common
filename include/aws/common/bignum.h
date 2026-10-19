@@ -1,5 +1,5 @@
-#ifndef AWS_COMMON_BIG_H
-#define AWS_COMMON_BIG_H
+#ifndef AWS_COMMON_BIGNUM_H
+#define AWS_COMMON_BIGNUM_H
 
 /**
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -10,8 +10,8 @@
 AWS_PUSH_SANE_WARNING_LEVEL
 
 /**
- * Arbitrary-precision signed integer. The magnitude of every value is limited to 512 64-bit words, that is
- * |v| < 2^32768, which is at most 9,865 decimal digits (but some numbers of that digit length are over magnitude).
+ * Arbitrary-precision signed integer. The magnitude of every value is limited to 2048 bytes (256 64-bit words), that is
+ * |v| < 2^16384, which is at most 4,933 decimal digits (but some numbers of that digit length are over magnitude).
  *
  * Big integers do not have arithmetic support, you can use aws_big_integer_to_str to export a value into another
  * library to do so.
@@ -32,7 +32,7 @@ AWS_EXTERN_C_BEGIN
  * Creates a big integer from a sign and an unsigned big-endian magnitude. An empty cursor is zero, which is never
  * negative.
  *
- * Raises AWS_ERROR_INVALID_ARGUMENT on invalid cursor or when the input exceeds the word limit.
+ * Raises AWS_ERROR_INVALID_ARGUMENT when the input exceeds the word limit.
  */
 AWS_COMMON_API
 struct aws_big_integer *aws_big_integer_new(
@@ -45,7 +45,7 @@ struct aws_big_integer *aws_big_integer_new(
  *
  * Accepts grammar [ "-" / "+" ] 1*DIGIT
  *
- * Raises AWS_ERROR_INVALID_ARGUMENT on invalid cursor, malformed input, or when the input exceeds the digit limit.
+ * Raises AWS_ERROR_INVALID_ARGUMENT on malformed input or when the input exceeds the digit limit.
  */
 AWS_COMMON_API
 struct aws_big_integer *aws_big_integer_new_from_cursor(struct aws_allocator *allocator, struct aws_byte_cursor cursor);
@@ -166,4 +166,4 @@ int aws_big_decimal_to_str(const struct aws_big_decimal *v, struct aws_byte_buf 
 AWS_EXTERN_C_END
 AWS_POP_SANE_WARNING_LEVEL
 
-#endif /* AWS_COMMON_BIG_H */
+#endif /* AWS_COMMON_BIGNUM_H */

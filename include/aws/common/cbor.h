@@ -6,7 +6,7 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 
-#include <aws/common/big.h>
+#include <aws/common/bignum.h>
 #include <aws/common/byte_buf.h>
 #include <aws/common/common.h>
 
