@@ -671,7 +671,7 @@ CBOR_TEST_CASE(cbor_encode_decode_big_integer_test) {
 
 // Decodes `hex` as one big integer and checks the base-10 value.
 static int s_check_decode_big_integer(struct aws_allocator *allocator, const char *hex, const char *expected) {
-    uint8_t data[64];
+    uint8_t data[64] = {0};
     struct aws_byte_buf buf = aws_byte_buf_from_empty_array(data, sizeof(data));
     struct aws_byte_cursor hex_cursor = aws_byte_cursor_from_c_str(hex);
     ASSERT_SUCCESS(aws_hex_decode(&hex_cursor, &buf), "hex: %s", hex);
@@ -897,7 +897,7 @@ CBOR_TEST_CASE(cbor_encode_decode_big_decimal_test) {
 
 // Decodes `hex`, which must be a single decimal fraction followed by the unsigned integer 5.
 static int s_check_decode_big_decimal(struct aws_allocator *allocator, const char *hex, const char *expected_str) {
-    uint8_t data[64];
+    uint8_t data[64] = {0};
     struct aws_byte_buf buf = aws_byte_buf_from_empty_array(data, sizeof(data));
     struct aws_byte_cursor hex_cursor = aws_byte_cursor_from_c_str(hex);
     ASSERT_SUCCESS(aws_hex_decode(&hex_cursor, &buf), "hex: %s", hex);
@@ -943,7 +943,7 @@ static int s_check_decode_big_decimal_fails(
     int expected_error,
     size_t expected_unconsumed) {
 
-    uint8_t data[64];
+    uint8_t data[64] = {0};
     struct aws_byte_buf buf = aws_byte_buf_from_empty_array(data, sizeof(data));
     struct aws_byte_cursor hex_cursor = aws_byte_cursor_from_c_str(hex);
     ASSERT_SUCCESS(aws_hex_decode(&hex_cursor, &buf), "hex: %s", hex);
