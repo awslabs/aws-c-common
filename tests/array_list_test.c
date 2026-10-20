@@ -730,6 +730,33 @@ static int s_array_list_shrink_to_fit_test_fn(struct aws_allocator *allocator, v
 
 AWS_TEST_CASE(array_list_shrink_to_fit_test, s_array_list_shrink_to_fit_test_fn)
 
+static int s_array_list_shrink_to_fit_empty_test_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct aws_array_list list;
+
+    const size_t list_size = 4;
+    ASSERT_SUCCESS(
+        aws_array_list_init_dynamic(&list, allocator, list_size, sizeof(int)),
+        "List initialization failed with error %d",
+        aws_last_error());
+
+    ASSERT_INT_EQUALS(0, list.length, "List length should be 0.");
+    ASSERT_INT_EQUALS(list_size * sizeof(int), list.current_size, "Initial capacity should match list_size.");
+
+    ASSERT_SUCCESS(
+        aws_array_list_shrink_to_fit(&list), "List shrink to fit failed with error code %d", aws_last_error());
+
+    ASSERT_INT_EQUALS(0, list.length, "List length should be 0.");
+    ASSERT_INT_EQUALS(0, list.current_size, "Shrunken size should be 0.");
+    ASSERT_PTR_EQUALS(NULL, list.data, "List data pointer should be NULL after shrinking empty list.");
+
+    aws_array_list_clean_up(&list);
+    return 0;
+}
+
+AWS_TEST_CASE(array_list_shrink_to_fit_empty_test, s_array_list_shrink_to_fit_empty_test_fn)
+
 static int s_array_list_shrink_to_fit_static_test_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
