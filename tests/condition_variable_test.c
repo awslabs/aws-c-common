@@ -146,3 +146,56 @@ static int s_test_conditional_notify_all_fn(struct aws_allocator *allocator, voi
 }
 
 AWS_TEST_CASE(conditional_notify_all, s_test_conditional_notify_all_fn)
+
+struct wait_for_max_test_data {
+    struct aws_mutex mutex;
+    struct aws_condition_variable condition_variable;
+    bool done;
+};
+
+static bool s_wait_for_max_predicate(void *arg) {
+    struct wait_for_max_test_data *test_data = arg;
+    return test_data->done;
+}
+
+static void s_wait_for_max_thread_fn(void *arg) {
+    struct wait_for_max_test_data *test_data = arg;
+
+    aws_thread_current_sleep(aws_timestamp_convert(100, AWS_TIMESTAMP_MILLIS, AWS_TIMESTAMP_NANOS, NULL));
+
+    aws_mutex_lock(&test_data->mutex);
+    test_data->done = true;
+    aws_condition_variable_notify_one(&test_data->condition_variable);
+    aws_mutex_unlock(&test_data->mutex);
+}
+
+/* Regression test: with a 32-bit time_t, a huge timeout used to wrap the deadline into the past,
+ * so the wait timed out immediately instead of waiting to be notified. */
+static int s_test_conditional_wait_for_max_timeout_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+
+    struct wait_for_max_test_data test_data = {
+        .mutex = AWS_MUTEX_INIT,
+        .condition_variable = AWS_CONDITION_VARIABLE_INIT,
+        .done = false,
+    };
+
+    ASSERT_SUCCESS(aws_mutex_lock(&test_data.mutex));
+
+    struct aws_thread thread;
+    ASSERT_SUCCESS(aws_thread_init(&thread, allocator));
+    ASSERT_SUCCESS(aws_thread_launch(&thread, s_wait_for_max_thread_fn, &test_data, NULL));
+
+    ASSERT_SUCCESS(aws_condition_variable_wait_for_pred(
+        &test_data.condition_variable, &test_data.mutex, INT64_MAX, s_wait_for_max_predicate, &test_data));
+    ASSERT_TRUE(test_data.done);
+
+    ASSERT_SUCCESS(aws_mutex_unlock(&test_data.mutex));
+
+    aws_thread_join(&thread);
+    aws_thread_clean_up(&thread);
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(conditional_wait_for_max_timeout, s_test_conditional_wait_for_max_timeout_fn)
