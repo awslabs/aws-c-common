@@ -41,14 +41,16 @@ static int s_prepare_lock_dir(const char *dir_path) {
     struct stat dir_info;
     if (lstat(dir_path, &dir_info) != 0 || !S_ISDIR(dir_info.st_mode)) {
         AWS_LOGF_ERROR(
-            AWS_LS_COMMON_GENERAL, "static: Lock directory %s is not a directory. The lock cannot be acquired.", dir_path);
+            AWS_LS_COMMON_GENERAL,
+            "static: Lock directory %s is not a directory. The lock cannot be acquired.",
+            dir_path);
         return aws_raise_error(AWS_ERROR_MUTEX_FAILED);
     }
 
     /*
      * Bypass umask on a directory we just created. On a pre-existing directory we own (e.g. created by an older version
-     * without the sticky bit), only add the sticky bit. Nobody but the owner (or root) can rename a directory out of the
-     * sticky /tmp, so the path still refers to the directory we just checked.
+     * without the sticky bit), only add the sticky bit. Nobody but the owner (or root) can rename a directory out of
+     * the sticky /tmp, so the path still refers to the directory we just checked.
      */
     if (dir_info.st_uid == geteuid()) {
         if (created) {
