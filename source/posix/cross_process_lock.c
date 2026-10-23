@@ -21,47 +21,46 @@ struct aws_cross_process_lock {
     int locked_fd;
 };
 
+static const char *s_lock_dir_path = "/tmp/aws_crt_cross_process_lock";
+
 /* rwx for everyone plus the sticky bit, same semantics as /tmp itself. */
 static const mode_t s_lock_dir_mode = S_ISVTX | S_IRWXU | S_IRWXG | S_IRWXO;
 
 /*
- * Ensures the lock directory exists, is a real directory (not a symlink), and has the sticky bit set so users can't
- * delete or replace each other's lock files.
+ * Opens the lock directory, creating it if needed, and returns a descriptor to it or -1 with an error raised.
+ * The path is only resolved once, without following a symlink; everything after that goes through the descriptor, so
+ * the directory can't be swapped out between checking and using it.
  */
-static int s_prepare_lock_dir(const char *dir_path) {
-    errno = 0;
-    bool created = mkdir(dir_path, s_lock_dir_mode) == 0;
-    if (!created && errno != EEXIST) {
-        AWS_LOGF_DEBUG(
-            AWS_LS_COMMON_GENERAL, "static: Lock directory %s failed to be created with errno %d", dir_path, errno);
-        /* let it fail on open of the lock file */
-        return AWS_OP_SUCCESS;
-    }
+static int s_open_lock_dir(void) {
+    /* already existing is fine; any other failure surfaces when opening below. */
+    mkdir(s_lock_dir_path, s_lock_dir_mode);
 
-    /* lstat so that a pre-existing symlink is never followed. */
-    struct stat dir_info;
-    if (lstat(dir_path, &dir_info) != 0 || !S_ISDIR(dir_info.st_mode)) {
+    int dir_fd = open(s_lock_dir_path, O_RDONLY | O_DIRECTORY | O_NOFOLLOW);
+    if (dir_fd < 0) {
+        int errno_value = errno; /* Always cache errno before potential side-effect */
         AWS_LOGF_ERROR(
             AWS_LS_COMMON_GENERAL,
-            "static: Lock directory %s is not a directory. The lock cannot be acquired.",
-            dir_path);
-        return aws_raise_error(AWS_ERROR_MUTEX_FAILED);
+            "static: Lock directory %s failed to open with errno %d. The lock cannot be acquired.",
+            s_lock_dir_path,
+            errno_value);
+        aws_translate_and_raise_io_error_or(errno_value, AWS_ERROR_MUTEX_FAILED);
+        return -1;
     }
 
-    /*
-     * Bypass umask on a directory we just created. On a pre-existing directory we own (e.g. created by an older version
-     * without the sticky bit), only add the sticky bit. Nobody but the owner (or root) can rename a directory out of
-     * the sticky /tmp, so the path still refers to the directory we just checked.
-     */
-    if (dir_info.st_uid == geteuid()) {
-        if (created) {
-            chmod(dir_path, s_lock_dir_mode);
-        } else if ((dir_info.st_mode & S_ISVTX) == 0) {
-            chmod(dir_path, (dir_info.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO)) | S_ISVTX);
+    /* Bypass umask on a directory we just created, and add the sticky bit to one created by an older version. */
+    struct stat dir_info;
+    if (fstat(dir_fd, &dir_info) == 0 && dir_info.st_uid == geteuid() &&
+        (dir_info.st_mode & (S_ISVTX | S_IRWXU | S_IRWXG | S_IRWXO)) != s_lock_dir_mode) {
+        if (fchmod(dir_fd, s_lock_dir_mode) != 0) {
+            AWS_LOGF_DEBUG(
+                AWS_LS_COMMON_GENERAL,
+                "static: Lock directory %s failed to update permissions with errno %d",
+                s_lock_dir_path,
+                errno);
         }
     }
 
-    return AWS_OP_SUCCESS;
+    return dir_fd;
 }
 
 struct aws_cross_process_lock *aws_cross_process_lock_try_acquire(
@@ -88,27 +87,27 @@ struct aws_cross_process_lock *aws_cross_process_lock_try_acquire(
      * another user's. Opening another user's lock file with O_CREAT may fail with EACCES (e.g. due to
      * fs.protected_regular); that case falls back to opening read-only below, which is sufficient for flock().
      */
-    struct aws_byte_cursor path_prefix = aws_byte_cursor_from_c_str("/tmp/aws_crt_cross_process_lock/");
-    if (s_prepare_lock_dir("/tmp/aws_crt_cross_process_lock")) {
+    int dir_fd = s_open_lock_dir();
+    if (dir_fd < 0) {
         return NULL;
     }
 
     struct aws_byte_cursor path_suffix = aws_byte_cursor_from_c_str(".lock");
 
     struct aws_byte_buf nonce_buf;
-    aws_byte_buf_init_copy_from_cursor(&nonce_buf, allocator, path_prefix);
-    aws_byte_buf_append_dynamic(&nonce_buf, &instance_nonce);
+    aws_byte_buf_init_copy_from_cursor(&nonce_buf, allocator, instance_nonce);
     aws_byte_buf_append_dynamic(&nonce_buf, &path_suffix);
     aws_byte_buf_append_null_terminator(&nonce_buf);
 
     struct aws_cross_process_lock *instance_lock = NULL;
 
     errno = 0;
-    int fd = open((const char *)nonce_buf.buffer, O_CREAT | O_RDWR | O_NOFOLLOW, 0666);
+    int fd = openat(dir_fd, (const char *)nonce_buf.buffer, O_CREAT | O_RDWR | O_NOFOLLOW, 0666);
     if (fd < 0) {
         AWS_LOGF_DEBUG(
             AWS_LS_COMMON_GENERAL,
-            "static: Lock file %s failed to open with errno %d",
+            "static: Lock file %s/%s failed to open with errno %d",
+            s_lock_dir_path,
             (const char *)nonce_buf.buffer,
             errno);
 
@@ -117,17 +116,19 @@ struct aws_cross_process_lock *aws_cross_process_lock_try_acquire(
         if (aws_last_error() == AWS_ERROR_NO_PERMISSION) {
             AWS_LOGF_DEBUG(
                 AWS_LS_COMMON_GENERAL,
-                "static: Lock file %s couldn't be opened due to file ownership permissions. Attempting to open as read "
-                "only",
+                "static: Lock file %s/%s couldn't be opened due to file ownership permissions. Attempting to open as "
+                "read only",
+                s_lock_dir_path,
                 (const char *)nonce_buf.buffer);
 
             errno = 0;
-            fd = open((const char *)nonce_buf.buffer, O_RDONLY | O_NOFOLLOW);
+            fd = openat(dir_fd, (const char *)nonce_buf.buffer, O_RDONLY | O_NOFOLLOW);
 
             if (fd < 0) {
                 AWS_LOGF_ERROR(
                     AWS_LS_COMMON_GENERAL,
-                    "static: Lock file %s failed to open with read-only permissions with errno %d",
+                    "static: Lock file %s/%s failed to open with read-only permissions with errno %d",
+                    s_lock_dir_path,
                     (const char *)nonce_buf.buffer,
                     errno);
                 aws_translate_and_raise_io_error_or(errno, AWS_ERROR_MUTEX_FAILED);
@@ -136,7 +137,8 @@ struct aws_cross_process_lock *aws_cross_process_lock_try_acquire(
         } else {
             AWS_LOGF_ERROR(
                 AWS_LS_COMMON_GENERAL,
-                "static: Lock file %s failed to open. The lock cannot be acquired.",
+                "static: Lock file %s/%s failed to open. The lock cannot be acquired.",
+                s_lock_dir_path,
                 (const char *)nonce_buf.buffer);
             goto cleanup;
         }
@@ -145,7 +147,8 @@ struct aws_cross_process_lock *aws_cross_process_lock_try_acquire(
     if (flock(fd, LOCK_EX | LOCK_NB) == -1) {
         AWS_LOGF_TRACE(
             AWS_LS_COMMON_GENERAL,
-            "static: Lock file %s already acquired by another instance",
+            "static: Lock file %s/%s already acquired by another instance",
+            s_lock_dir_path,
             (const char *)nonce_buf.buffer);
         close(fd);
         aws_raise_error(AWS_ERROR_MUTEX_CALLER_NOT_OWNER);
@@ -158,12 +161,14 @@ struct aws_cross_process_lock *aws_cross_process_lock_try_acquire(
 
     AWS_LOGF_TRACE(
         AWS_LS_COMMON_GENERAL,
-        "static: Lock file %s acquired by this instance with fd %d",
+        "static: Lock file %s/%s acquired by this instance with fd %d",
+        s_lock_dir_path,
         (const char *)nonce_buf.buffer,
         fd);
 
 cleanup:
     aws_byte_buf_clean_up(&nonce_buf);
+    close(dir_fd);
 
     return instance_lock;
 }
