@@ -2,6 +2,7 @@
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0.
  */
+#define _GNU_SOURCE /* NOLINT(bugprone-reserved-identifier) */ /* O_NOFOLLOW on older glibc */
 #include <aws/common/cross_process_lock.h>
 
 #include <aws/common/byte_buf.h>
