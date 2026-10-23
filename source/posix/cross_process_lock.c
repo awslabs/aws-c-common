@@ -20,6 +20,47 @@ struct aws_cross_process_lock {
     int locked_fd;
 };
 
+/* rwx for everyone plus the sticky bit, same semantics as /tmp itself. */
+static const mode_t s_lock_dir_mode = S_ISVTX | S_IRWXU | S_IRWXG | S_IRWXO;
+
+/*
+ * Ensures the lock directory exists, is a real directory (not a symlink), and has the sticky bit set so users can't
+ * delete or replace each other's lock files.
+ */
+static int s_prepare_lock_dir(const char *dir_path) {
+    errno = 0;
+    bool created = mkdir(dir_path, s_lock_dir_mode) == 0;
+    if (!created && errno != EEXIST) {
+        AWS_LOGF_DEBUG(
+            AWS_LS_COMMON_GENERAL, "static: Lock directory %s failed to be created with errno %d", dir_path, errno);
+        /* let it fail on open of the lock file */
+        return AWS_OP_SUCCESS;
+    }
+
+    /* lstat so that a pre-existing symlink is never followed. */
+    struct stat dir_info;
+    if (lstat(dir_path, &dir_info) != 0 || !S_ISDIR(dir_info.st_mode)) {
+        AWS_LOGF_ERROR(
+            AWS_LS_COMMON_GENERAL, "static: Lock directory %s is not a directory. The lock cannot be acquired.", dir_path);
+        return aws_raise_error(AWS_ERROR_MUTEX_FAILED);
+    }
+
+    /*
+     * Bypass umask on a directory we just created. On a pre-existing directory we own (e.g. created by an older version
+     * without the sticky bit), only add the sticky bit. Nobody but the owner (or root) can rename a directory out of the
+     * sticky /tmp, so the path still refers to the directory we just checked.
+     */
+    if (dir_info.st_uid == geteuid()) {
+        if (created) {
+            chmod(dir_path, s_lock_dir_mode);
+        } else if ((dir_info.st_mode & S_ISVTX) == 0) {
+            chmod(dir_path, (dir_info.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO)) | S_ISVTX);
+        }
+    }
+
+    return AWS_OP_SUCCESS;
+}
+
 struct aws_cross_process_lock *aws_cross_process_lock_try_acquire(
     struct aws_allocator *allocator,
     struct aws_byte_cursor instance_nonce) {
@@ -39,22 +80,15 @@ struct aws_cross_process_lock *aws_cross_process_lock_try_acquire(
     }
 
     /*
-     * The unix standard says /tmp has to be there and be writable. However, while it may be tempting to just use the
-     * /tmp/ directory, it often has the sticky bit set which would prevent a subprocess from being able to call open
-     * with create on the file. The solution is simple, just write it to a subdirectory inside
-     * /tmp and override umask via. chmod of 0777.
+     * The unix standard says /tmp has to be there and be writable. Lock files go into a dedicated world-writable
+     * subdirectory with the sticky bit set, so any user can create their lock file but nobody can delete or replace
+     * another user's. Opening another user's lock file with O_CREAT may fail with EACCES (e.g. due to
+     * fs.protected_regular); that case falls back to opening read-only below, which is sufficient for flock().
      */
     struct aws_byte_cursor path_prefix = aws_byte_cursor_from_c_str("/tmp/aws_crt_cross_process_lock/");
-    struct aws_string *path_to_create = aws_string_new_from_cursor(allocator, &path_prefix);
-
-    /* It's probably there already and we don't care if it is. */
-    if (!aws_directory_exists(path_to_create)) {
-        /* if this call fails just let it fail on open below. */
-        aws_directory_create(path_to_create);
-        /* bypass umask by setting the perms we actually requested */
-        chmod(aws_string_c_str(path_to_create), S_IRWXU | S_IRWXG | S_IRWXO);
+    if (s_prepare_lock_dir("/tmp/aws_crt_cross_process_lock")) {
+        return NULL;
     }
-    aws_string_destroy(path_to_create);
 
     struct aws_byte_cursor path_suffix = aws_byte_cursor_from_c_str(".lock");
 
@@ -67,7 +101,7 @@ struct aws_cross_process_lock *aws_cross_process_lock_try_acquire(
     struct aws_cross_process_lock *instance_lock = NULL;
 
     errno = 0;
-    int fd = open((const char *)nonce_buf.buffer, O_CREAT | O_RDWR, 0666);
+    int fd = open((const char *)nonce_buf.buffer, O_CREAT | O_RDWR | O_NOFOLLOW, 0666);
     if (fd < 0) {
         AWS_LOGF_DEBUG(
             AWS_LS_COMMON_GENERAL,
@@ -85,7 +119,7 @@ struct aws_cross_process_lock *aws_cross_process_lock_try_acquire(
                 (const char *)nonce_buf.buffer);
 
             errno = 0;
-            fd = open((const char *)nonce_buf.buffer, O_RDONLY);
+            fd = open((const char *)nonce_buf.buffer, O_RDONLY | O_NOFOLLOW);
 
             if (fd < 0) {
                 AWS_LOGF_ERROR(
