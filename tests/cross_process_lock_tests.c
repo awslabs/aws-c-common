@@ -7,6 +7,10 @@
 #include <aws/common/process.h>
 #include <aws/testing/aws_test_harness.h>
 
+#ifndef _WIN32
+#    include <sys/stat.h>
+#endif
+
 static int s_test_cross_process_lock_works_in_proc(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
     aws_common_library_init(allocator);
@@ -28,6 +32,29 @@ static int s_test_cross_process_lock_works_in_proc(struct aws_allocator *allocat
     return AWS_OP_SUCCESS;
 }
 AWS_TEST_CASE(test_cross_process_lock_works_in_proc, s_test_cross_process_lock_works_in_proc)
+
+static int s_test_cross_process_lock_dir_is_sticky(struct aws_allocator *allocator, void *ctx) {
+    (void)ctx;
+    aws_common_library_init(allocator);
+
+    struct aws_byte_cursor lock_nonce = aws_byte_cursor_from_c_str("lock_sticky_nonce");
+    struct aws_cross_process_lock *instance_lock = aws_cross_process_lock_try_acquire(allocator, lock_nonce);
+    ASSERT_NOT_NULL(instance_lock);
+
+#ifndef _WIN32
+    /* the lock directory is world-writable, so it must have the sticky bit set like /tmp. */
+    struct stat dir_info;
+    ASSERT_INT_EQUALS(0, lstat("/tmp/aws_crt_cross_process_lock", &dir_info));
+    ASSERT_TRUE(S_ISDIR(dir_info.st_mode));
+    ASSERT_TRUE((dir_info.st_mode & S_ISVTX) != 0);
+#endif
+
+    aws_cross_process_lock_release(instance_lock);
+    aws_common_library_clean_up();
+
+    return AWS_OP_SUCCESS;
+}
+AWS_TEST_CASE(test_cross_process_lock_dir_is_sticky, s_test_cross_process_lock_dir_is_sticky)
 
 static int s_cross_process_lock_mp_test_runner(struct aws_allocator *allocator, void *ctx) {
     (void)ctx;
