@@ -9,6 +9,7 @@
 #include <aws/common/mutex.h>
 
 #include <errno.h>
+#include <limits.h>
 
 static int process_error_code(int err) {
     switch (err) {
@@ -95,8 +96,16 @@ int aws_condition_variable_wait_for(
 
     struct timespec ts;
     uint64_t remainder = 0;
-    ts.tv_sec = (time_t)aws_timestamp_convert(
+    uint64_t secs = aws_timestamp_convert(
         (uint64_t)(time_to_wait + current_sys_time), AWS_TIMESTAMP_NANOS, AWS_TIMESTAMP_SECS, &remainder);
+
+    /* time_t may be 32-bit: clamp far-future deadlines instead of letting them wrap into the past */
+    const uint64_t time_t_max = ((uint64_t)1 << (sizeof(time_t) * CHAR_BIT - 1)) - 1;
+    if (secs > time_t_max) {
+        secs = time_t_max;
+        remainder = 0;
+    }
+    ts.tv_sec = (time_t)secs;
     ts.tv_nsec = (long)remainder;
 
     int err_code = pthread_cond_timedwait(&condition_variable->condition_handle, &mutex->mutex_handle, &ts);
