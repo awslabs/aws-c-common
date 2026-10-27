@@ -31,6 +31,10 @@
 #    define AWS_OS_LINUX
 #endif
 
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+#    define AWS_OS_BSD
+#endif
+
 #if defined(__ANDROID__)
 #    define AWS_OS_ANDROID
 #endif
