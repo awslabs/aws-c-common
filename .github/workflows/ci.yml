@@ -211,7 +211,7 @@ jobs:
         python .\aws-c-common\scripts\appverifier_ctest.py --build_directory .\aws-c-common\build\aws-c-common
 
   macos-x64:
-    runs-on: macos-14-large # latest
+    runs-on: macos-15-large # latest
     steps:
     - uses: aws-actions/configure-aws-credentials@v6
       with:
@@ -224,7 +224,7 @@ jobs:
         ./builder build -p ${{ env.PACKAGE_NAME }}
 
   macos:
-    runs-on: macos-14 # latest
+    runs-on: macos-15 # latest
     steps:
     - uses: aws-actions/configure-aws-credentials@v6
       with:
@@ -237,7 +237,7 @@ jobs:
         ./builder build -p ${{ env.PACKAGE_NAME }}
 
   macos-no-cpu-extensions:
-    runs-on: macos-14 # latest
+    runs-on: macos-15 # latest
     steps:
     - uses: aws-actions/configure-aws-credentials@v6
       with:
@@ -337,7 +337,7 @@ jobs:
         python builder.pyz build -p ${{ env.PACKAGE_NAME }} --config Debug
 
   macos-debug:
-    runs-on: macos-14 # latest
+    runs-on: macos-15 # latest
     steps:
     - uses: aws-actions/configure-aws-credentials@v6
       with:
