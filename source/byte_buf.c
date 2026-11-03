@@ -1636,6 +1636,14 @@ bool aws_byte_buf_write_u8(struct aws_byte_buf *AWS_RESTRICT buf, uint8_t c) {
 bool aws_byte_buf_write_u8_n(struct aws_byte_buf *buf, uint8_t c, size_t count) {
     AWS_PRECONDITION(aws_byte_buf_is_valid(buf));
 
+    if (count == 0) {
+        /* Nothing to write, and buf->buffer may legitimately be NULL when the
+         * buffer is empty - `buf->buffer + buf->len` would then be NULL + 0.
+         * Mirrors the same early return in aws_byte_buf_write. */
+        AWS_POSTCONDITION(aws_byte_buf_is_valid(buf));
+        return true;
+    }
+
     if (buf->len > (SIZE_MAX >> 1) || count > (SIZE_MAX >> 1) || buf->len + count > buf->capacity) {
         AWS_POSTCONDITION(aws_byte_buf_is_valid(buf));
         return false;
