@@ -341,7 +341,15 @@ static inline __m256i encode_stride(__m256i vec) {
     return encode_chars(vec);
 }
 
-void aws_common_private_base64_encode_sse41(const uint8_t *input, uint8_t *output, size_t inlen) {
+void aws_common_private_base64_encode_sse41(
+    const uint8_t *input,
+    uint8_t *output,
+    size_t inlen,
+    bool url_safe_encoding) {
+    /* AVX2 implementation currently does not support URL base64. */
+    AWS_ASSERT(!url_safe_encoding);
+    (void)url_safe_encoding;
+
     __m256i instride, outstride;
 
     while (inlen >= 32) {
