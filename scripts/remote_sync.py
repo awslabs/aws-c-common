@@ -57,8 +57,11 @@ class RemoteSync:
         # Handle direct repository URLs
         if url.endswith('.git'):
             return url, 'main'
-        elif 'github.com' in url and not url.endswith('.git'):
-            return url + '.git', 'main'
+        else:
+            parsed_url = urlparse(url)
+            hostname = (parsed_url.hostname or "").lower()
+            if hostname == 'github.com':
+                return url + '.git', 'main'
 
         raise RemoteSyncError(f"Unable to parse remote URL: {url}")
 
