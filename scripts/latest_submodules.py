@@ -65,22 +65,30 @@ def get_release_tags(prefix='v'):
     }
     """
     git_output = run('git', 'ls-remote', '--tags').stdout
-    tags = []
+    tags = {}
     for line in git_output.splitlines():
         # line looks like: "e18f041a0c8d17189f2eae2a32f16e0a7a3f0f1c refs/tags/v0.5.18"
+        # Annotated tags also have a peeled line pointing at the actual commit:
+        #                  "bf9994952db54440754f1eff9b5d41582e71ee52 refs/tags/v0.5.18^{}"
         match = re.match(
-            r'([a-f0-9]+)\s+refs/tags/(' + prefix + r'([0-9]+)\.([0-9]+)\.([0-9]+))$', line)
+            r'([a-f0-9]+)\s+refs/tags/(' + prefix + r'([0-9]+)\.([0-9]+)\.([0-9]+))(\^\{\})?$', line)
         if not match:
             # skip malformed release tags
             continue
-        tags.append({
+        version = match.group(2)
+        peeled = match.group(6) is not None
+        # For annotated tags the unpeeled SHA is the tag object, not the commit,
+        # so the peeled entry takes precedence.
+        if version in tags and not peeled:
+            continue
+        tags[version] = {
             'commit': match.group(1),
-            'version': match.group(2),
+            'version': version,
             'num_tuple': (int(match.group(3)), int(match.group(4)), int(match.group(5))),
-        })
+        }
 
     # sort highest version first
-    return sorted(tags, reverse=True, key=lambda tag: tag['num_tuple'])
+    return sorted(tags.values(), reverse=True, key=lambda tag: tag['num_tuple'])
 
 
 def get_current_commit():
