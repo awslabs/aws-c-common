@@ -161,16 +161,29 @@ size_t aws_hash_table_get_entry_count(const struct aws_hash_table *map) {
     return state->entry_count;
 }
 
-/* Allocates a hash table state with room for at least expected_elements slots,
- * and sets alloc, size, max_load, max_load_factor and mask. All slots are empty
- * and entry_count is 0.
- * Returns NULL with the error raised on failure.
+/* Given a header template, allocates space for a hash table of the appropriate
+ * size, and copies the state header into this allocated memory, which is
+ * returned.
  */
-static struct hash_table_state *s_state_new(
-    struct aws_allocator *alloc,
-    size_t expected_elements,
-    double max_load_factor) {
+static struct hash_table_state *s_alloc_state(const struct hash_table_state *template) {
+    size_t required_bytes;
+    if (hash_table_state_required_bytes(template->size, &required_bytes)) {
+        return NULL;
+    }
 
+    /* An empty slot has hashcode 0. So this marks all slots as empty */
+    struct hash_table_state *state = aws_mem_calloc(template->alloc, 1, required_bytes);
+
+    if (state == NULL) {
+        return state;
+    }
+
+    *state = *template;
+    return state;
+}
+
+/* Computes the correct size and max_load based on a requested size. */
+static int s_update_template_size(struct hash_table_state *template, size_t expected_elements) {
     size_t min_size = expected_elements;
 
     if (min_size < 2) {
@@ -180,30 +193,21 @@ static struct hash_table_state *s_state_new(
     /* size is always a power of 2 */
     size_t size;
     if (aws_round_up_to_power_of_two(min_size, &size)) {
-        return NULL;
+        return AWS_OP_ERR;
     }
 
-    size_t required_bytes;
-    if (hash_table_state_required_bytes(size, &required_bytes)) {
-        return NULL;
-    }
-
-    /* An empty slot has hashcode 0. So this marks all slots as empty */
-    struct hash_table_state *state = aws_mem_calloc(alloc, 1, required_bytes);
-
-    state->alloc = alloc;
-    state->size = size;
-    state->max_load_factor = max_load_factor;
-    state->max_load = (size_t)(max_load_factor * (double)size);
+    /* Update the template once we've calculated everything successfully */
+    template->size = size;
+    template->max_load = (size_t)(template->max_load_factor * (double)template->size);
     /* Ensure that there is always at least one empty slot in the hash table */
-    if (state->max_load >= size) {
-        state->max_load = size - 1;
+    if (template->max_load >= size) {
+        template->max_load = size - 1;
     }
 
     /* Since size is a power of 2: (index & (size - 1)) == (index % size) */
-    state->mask = size - 1;
+    template->mask = size - 1;
 
-    return state;
+    return AWS_OP_SUCCESS;
 }
 
 int aws_hash_table_init(
@@ -218,17 +222,25 @@ int aws_hash_table_init(
     AWS_PRECONDITION(alloc != NULL);
     AWS_PRECONDITION(hash_fn != NULL);
     AWS_PRECONDITION(equals_fn != NULL);
-    struct hash_table_state *state = s_state_new(alloc, size, 0.95 /* max_load_factor, TODO: configurable? */);
-    if (!state) {
+    struct hash_table_state template;
+    AWS_ZERO_STRUCT(template);
+    template.hash_fn = hash_fn;
+    template.equals_fn = equals_fn;
+    template.destroy_key_fn = destroy_key_fn;
+    template.destroy_value_fn = destroy_value_fn;
+    template.alloc = alloc;
+
+    template.entry_count = 0;
+    template.max_load_factor = 0.95; /* TODO - make configurable? */
+
+    if (s_update_template_size(&template, size)) {
         return AWS_OP_ERR;
     }
+    map->p_impl = s_alloc_state(&template);
 
-    map->p_impl = state;
-
-    state->hash_fn = hash_fn;
-    state->equals_fn = equals_fn;
-    state->destroy_key_fn = destroy_key_fn;
-    state->destroy_value_fn = destroy_value_fn;
+    if (!map->p_impl) {
+        return AWS_OP_ERR;
+    }
 
     AWS_SUCCEED_WITH_POSTCONDITION(aws_hash_table_is_valid(map));
 }
@@ -466,22 +478,21 @@ static struct hash_table_entry *s_emplace_item(
 
 static int s_expand_table(struct aws_hash_table *map) {
     struct hash_table_state *old_state = map->p_impl;
+    struct hash_table_state template = *old_state;
 
     size_t new_size;
-    if (aws_mul_size_checked(old_state->size, 2, &new_size)) {
+    if (aws_mul_size_checked(template.size, 2, &new_size)) {
         return AWS_OP_ERR;
     }
 
-    struct hash_table_state *new_state = s_state_new(old_state->alloc, new_size, old_state->max_load_factor);
+    if (s_update_template_size(&template, new_size)) {
+        return AWS_OP_ERR;
+    }
+
+    struct hash_table_state *new_state = s_alloc_state(&template);
     if (!new_state) {
         return AWS_OP_ERR;
     }
-
-    new_state->hash_fn = old_state->hash_fn;
-    new_state->equals_fn = old_state->equals_fn;
-    new_state->destroy_key_fn = old_state->destroy_key_fn;
-    new_state->destroy_value_fn = old_state->destroy_value_fn;
-    new_state->entry_count = old_state->entry_count;
 
     for (size_t i = 0; i < old_state->size; i++) {
         struct hash_table_entry entry = old_state->slots[i];
