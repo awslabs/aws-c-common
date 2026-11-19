@@ -24,6 +24,7 @@ struct hash_table_entry {
 #ifdef _MSC_VER
 #    pragma warning(push)
 #    pragma warning(disable : 4200)
+#    pragma warning(disable : 4815)
 #endif
 struct hash_table_state {
     aws_hash_fn *hash_fn;
