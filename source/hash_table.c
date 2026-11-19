@@ -223,6 +223,7 @@ int aws_hash_table_init(
     AWS_PRECONDITION(hash_fn != NULL);
     AWS_PRECONDITION(equals_fn != NULL);
     struct hash_table_state template;
+    AWS_ZERO_STRUCT(template);
     template.hash_fn = hash_fn;
     template.equals_fn = equals_fn;
     template.destroy_key_fn = destroy_key_fn;
