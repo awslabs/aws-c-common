@@ -21,6 +21,13 @@
  * macro. */
 #include <aws/common/private/lookup3.inl>
 
+/* MSVC warns (C4815) that the stack hash_table_state below has no storage for slots.
+ * It is a header-only template passed to s_alloc_state, which never accesses slots. */
+#ifdef _MSC_VER
+#    pragma warning(push)
+#    pragma warning(disable : 4815)
+#endif
+
 static void s_suppress_unused_lookup3_func_warnings(void) {
     /* We avoid making changes to lookup3 if we can avoid it, but since it has functions
      * we're not using, reference them somewhere to suppress the unused function warning.
@@ -1113,3 +1120,7 @@ uint64_t aws_hash_uint64_t_by_identity(const void *item) {
 bool aws_hash_compare_uint64_t_eq(const void *a, const void *b) {
     return *(uint64_t *)a == *(uint64_t *)b;
 }
+
+#ifdef _MSC_VER
+#    pragma warning(pop)
+#endif

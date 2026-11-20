@@ -18,17 +18,12 @@ struct hash_table_entry {
 /* Using a flexible array member is the C99 compliant way to have the hash_table_entries
  * immediately follow the struct.
  *
- * MSVC warns about this in two places, so both warnings are disabled:
- * - C4200 at this definition, because MSVC treats a flexible array member as a
- *   nonstandard extension.
- * - C4815 where a hash_table_state is declared on the stack, because that object has
- *   no storage for slots. hash_table.c does this for the header-only templates it
- *   passes to s_alloc_state, which never access slots.
+ * MSVC treats a flexible array member as a nonstandard extension (C4200), so
+ * that warning is disabled for this definition.
  */
 #ifdef _MSC_VER
 #    pragma warning(push)
 #    pragma warning(disable : 4200)
-#    pragma warning(disable : 4815)
 #endif
 struct hash_table_state {
     aws_hash_fn *hash_fn;
