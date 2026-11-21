@@ -44,8 +44,11 @@ int aws_array_list_shrink_to_fit(struct aws_array_list *AWS_RESTRICT list) {
                 }
 
                 memcpy(raw_data, list->data, ideal_size);
-                aws_mem_release(list->alloc, list->data);
             }
+            /* Release the old array whether or not a new one was allocated:
+             * with ideal_size == 0 (an empty list) there is no new array, but
+             * the old one still has to go. aws_mem_release tolerates NULL. */
+            aws_mem_release(list->alloc, list->data);
             list->data = raw_data;
             list->current_size = ideal_size;
         }
