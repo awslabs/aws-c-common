@@ -55,7 +55,12 @@ static int s_init_from_uri_str(struct aws_uri *uri) {
 
     struct aws_byte_cursor uri_cur = aws_byte_cursor_from_buf(&uri->uri_str);
 
-    while (parser.state < FINISHED) {
+    /* An empty uri_str yields a cursor with a NULL ptr (aws_byte_cursor_from_buf
+     * of an empty buffer), and every state function hands that straight to
+     * memchr, whose first argument is declared nonnull. An empty string is not a
+     * parseable URI, so skip the loop: the state stays below FINISHED and the
+     * cleanup below reports the same AWS_OP_ERR it already did. */
+    while (uri_cur.len != 0 && parser.state < FINISHED) {
         s_states[parser.state](&parser, &uri_cur);
     }
 
