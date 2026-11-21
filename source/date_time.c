@@ -231,6 +231,7 @@ static bool s_parse_rfc_822(
                     state_start_index = index + 1;
                 } else if (aws_isdigit(c)) {
                     state = ON_MONTH_DAY;
+                    parsed_time->tm_mday = c - '0';
                 } else if (!aws_isalpha(c)) {
                     error = true;
                 }
