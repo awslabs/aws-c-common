@@ -52,6 +52,7 @@ add_test_case(mutex_try_lock_is_correct_test)
 
 add_test_case(conditional_notify_one)
 add_test_case(conditional_notify_all)
+add_test_case(conditional_wait_for_max_timeout)
 
 add_test_case(error_code_cross_thread_test)
 

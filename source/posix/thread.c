@@ -478,10 +478,17 @@ bool aws_thread_thread_id_equal(aws_thread_id_t t1, aws_thread_id_t t2) {
 
 void aws_thread_current_sleep(uint64_t nanos) {
     uint64_t nano = 0;
-    time_t seconds = (time_t)aws_timestamp_convert(nanos, AWS_TIMESTAMP_NANOS, AWS_TIMESTAMP_SECS, &nano);
+    uint64_t seconds = aws_timestamp_convert(nanos, AWS_TIMESTAMP_NANOS, AWS_TIMESTAMP_SECS, &nano);
+
+    /* time_t may be 32-bit: clamp long sleeps instead of letting them wrap to a negative (invalid) value */
+    const uint64_t time_t_max = ((uint64_t)1 << (sizeof(time_t) * CHAR_BIT - 1)) - 1;
+    if (seconds > time_t_max) {
+        seconds = time_t_max;
+        nano = 0;
+    }
 
     struct timespec tm = {
-        .tv_sec = seconds,
+        .tv_sec = (time_t)seconds,
         .tv_nsec = (long)nano,
     };
     struct timespec output;
