@@ -219,6 +219,34 @@ static int s_test_rfc822_utc_no_dow_parsing_fn(struct aws_allocator *allocator, 
 
 AWS_TEST_CASE(rfc822_utc_no_dow_parsing, s_test_rfc822_utc_no_dow_parsing_fn)
 
+static int s_test_rfc822_utc_no_dow_day_digits_parsing_fn(struct aws_allocator *allocator, void *ctx) {
+    (void)allocator;
+    (void)ctx;
+
+    struct aws_date_time date_time;
+    const char *two_digit_day_str = "12 Oct 2002 08:05:09 GMT";
+    struct aws_byte_buf date_buf = aws_byte_buf_from_c_str(two_digit_day_str);
+
+    ASSERT_SUCCESS(aws_date_time_init_from_str(&date_time, &date_buf, AWS_DATE_FORMAT_RFC822));
+    ASSERT_INT_EQUALS(AWS_DATE_DAY_OF_WEEK_SATURDAY, aws_date_time_day_of_week(&date_time, false));
+    ASSERT_UINT_EQUALS(12, aws_date_time_month_day(&date_time, false));
+    ASSERT_UINT_EQUALS(AWS_DATE_MONTH_OCTOBER, aws_date_time_month(&date_time, false));
+    ASSERT_UINT_EQUALS(2002, aws_date_time_year(&date_time, false));
+
+    const char *one_digit_day_str = "2 Oct 2002 08:05:09 GMT";
+    date_buf = aws_byte_buf_from_c_str(one_digit_day_str);
+
+    ASSERT_SUCCESS(aws_date_time_init_from_str(&date_time, &date_buf, AWS_DATE_FORMAT_RFC822));
+    ASSERT_INT_EQUALS(AWS_DATE_DAY_OF_WEEK_WEDNESDAY, aws_date_time_day_of_week(&date_time, false));
+    ASSERT_UINT_EQUALS(2, aws_date_time_month_day(&date_time, false));
+    ASSERT_UINT_EQUALS(AWS_DATE_MONTH_OCTOBER, aws_date_time_month(&date_time, false));
+    ASSERT_UINT_EQUALS(2002, aws_date_time_year(&date_time, false));
+
+    return AWS_OP_SUCCESS;
+}
+
+AWS_TEST_CASE(rfc822_utc_no_dow_day_digits_parsing, s_test_rfc822_utc_no_dow_day_digits_parsing_fn)
+
 static int s_test_rfc822_utc_dos_prevented_fn(struct aws_allocator *allocator, void *ctx) {
     (void)allocator;
     (void)ctx;
