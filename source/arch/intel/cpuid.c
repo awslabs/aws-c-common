@@ -36,6 +36,7 @@ static void s_cache_cpu_features(void) {
     }
     aws_run_cpuid(0x1, 0x0, abcd);
     s_cpu_features[AWS_CPU_FEATURE_CLMUL] = abcd[2] & (1 << 1);    /* pclmulqdq = ECX[bit 1] */
+    s_cpu_features[AWS_CPU_FEATURE_SSSE_3] = abcd[2] & (1 << 9);   /* ssse3 = ECX[bit 9] */
     s_cpu_features[AWS_CPU_FEATURE_SSE_4_1] = abcd[2] & (1 << 19); /* sse4.1 = ECX[bit 19] */
     s_cpu_features[AWS_CPU_FEATURE_SSE_4_2] = abcd[2] & (1 << 20); /* sse4.2 = ECX[bit 20] */
 
