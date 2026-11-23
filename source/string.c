@@ -302,7 +302,8 @@ bool aws_string_eq(const struct aws_string *a, const struct aws_string *b) {
 /**
  * Returns true if bytes of string are equivalent, using a case-insensitive comparison.
  */
-bool aws_string_eq_ignore_case(const struct aws_string *a, const struct aws_string *b) {
+bool aws_string_eq_ignore_case(const struct aws_string *a, const struct aws_string *b, bool strict) {
+    (void)strict;
     AWS_PRECONDITION(!a || aws_string_is_valid(a));
     AWS_PRECONDITION(!b || aws_string_is_valid(b));
     if (a == b) {
