@@ -4,12 +4,15 @@ name: Pre-merge checks
 on:
   pull_request:
     types: [opened, reopened, synchronize, edited, labeled, unlabeled]
+  pull_request_target:
+    types: [opened, reopened, synchronize, edited, labeled, unlabeled]
 
 concurrency:
-  group: pre-merge-${{ github.event.pull_request.number }}
+  group: pre-merge-${{ github.event.pull_request.number }}-${{ github.event_name }}
 
 jobs:
-  pre-merge:
+  same-repo:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
     permissions:
       contents: read
       pull-requests: write
@@ -20,5 +23,19 @@ jobs:
       lib-name: aws-c-common
       approval-label: ci-ready
       gate-same-repo: true
+    secrets:
+      CRT_CI_ROLE_ARN: ${{ secrets.CRT_CI_ROLE_ARN }}
+
+  fork:
+    if: github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.full_name != github.repository
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+      statuses: write
+    uses: awslabs/aws-crt-builder/.github/workflows/pre-merge-checks.yml@sim/premerge-v2
+    with:
+      lib-name: aws-c-common
+      approval-label: ci-ready
     secrets:
       CRT_CI_ROLE_ARN: ${{ secrets.CRT_CI_ROLE_ARN }}
