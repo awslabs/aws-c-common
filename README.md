@@ -282,3 +282,4 @@ The `verification/cbmc/proofs` directory contains CBMC proofs.
 In order to run these proofs you will need to install CBMC and other tools by following the instructions [here](https://model-checking.github.io/cbmc-training/installation.html).
 <!-- sim: one commit, count the runs -->
 <!-- sim: second commit -->
+<!-- sim: dual trigger commit -->
