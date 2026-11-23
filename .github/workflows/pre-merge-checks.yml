@@ -1,0 +1,26 @@
+# SIMULATION HARNESS for awslabs/aws-crt-builder pre-merge-checks. Never merged.
+name: Pre-merge checks
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, edited, labeled, unlabeled]
+  push:
+    branches-ignore:
+      - 'main'
+
+concurrency:
+  group: pre-merge-${{ github.event.pull_request.number || github.ref }}
+
+jobs:
+  pre-merge:
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+      statuses: write
+    uses: awslabs/aws-crt-builder/.github/workflows/pre-merge-checks.yml@sim/pre-merge
+    with:
+      lib-name: aws-c-common
+      approval-environment: ${{ github.event.pull_request.head.repo.full_name != github.repository && 'customer-env' || '' }}
+    secrets:
+      CRT_CI_ROLE_ARN: ${{ secrets.CRT_CI_ROLE_ARN }}
