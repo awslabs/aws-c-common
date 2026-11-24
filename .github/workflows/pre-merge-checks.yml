@@ -1,5 +1,5 @@
 # SIMULATION HARNESS for awslabs/aws-crt-builder pre-merge-checks. Never merged.
-# pull_request stands in for pull_request_target, which runs from the default branch.
+# Same caller as aws-c-s3 #731, against the workflow on aws-crt-builder main.
 name: Pre-merge checks
 
 on:
@@ -7,7 +7,8 @@ on:
     types: [opened, reopened, synchronize, edited, labeled, unlabeled]
 
 concurrency:
-  group: pre-merge-${{ github.event.pull_request.number }}-${{ github.event.action }}-${{ github.event.label.name }}
+  group: pre-merge-${{ github.event.pull_request.number }}
+  queue: max
 
 jobs:
   pre-merge:
@@ -16,10 +17,9 @@ jobs:
       pull-requests: write
       id-token: write
       statuses: write
-    uses: awslabs/aws-crt-builder/.github/workflows/pre-merge-checks.yml@sim/premerge-v2
+    uses: awslabs/aws-crt-builder/.github/workflows/pre-merge-checks.yml@main
     with:
       lib-name: aws-c-common
-      approval-label: ci-ready
-      gate-same-repo: true
+      approval-environment: ${{ github.event.pull_request.head.repo.full_name != github.repository && 'customer-env' || '' }}
     secrets:
       CRT_CI_ROLE_ARN: ${{ secrets.CRT_CI_ROLE_ARN }}
