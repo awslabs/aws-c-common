@@ -7,7 +7,7 @@ on:
     types: [opened, reopened, synchronize, edited, labeled, unlabeled]
 
 concurrency:
-  group: pre-merge-${{ github.event.pull_request.number }}
+  group: pre-merge-${{ github.event.pull_request.number }}-${{ github.event.action }}-${{ github.event.label.name }}
 
 jobs:
   pre-merge:
