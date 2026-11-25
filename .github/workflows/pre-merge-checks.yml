@@ -1,4 +1,5 @@
-# SIMULATION HARNESS: aws-c-s3 #731's caller shape against #412.
+# SIMULATION HARNESS for awslabs/aws-crt-builder pre-merge-checks. Never merged.
+# The caller from the workflow's header, on pull_request (the internal-developer path).
 name: Pre-merge checks
 
 on:
@@ -7,7 +8,7 @@ on:
 
 concurrency:
   group: pre-merge-${{ github.event.pull_request.number }}
-  queue: max
+  cancel-in-progress: true
 
 jobs:
   pre-merge:
@@ -19,6 +20,6 @@ jobs:
     uses: awslabs/aws-crt-builder/.github/workflows/pre-merge-checks.yml@sim/premerge-v2
     with:
       lib-name: aws-c-common
-      approval-environment: ${{ github.event.pull_request.head.repo.full_name != github.repository && 'customer-env' || '' }}
+      approval-label: ci-ready
     secrets:
       CRT_CI_ROLE_ARN: ${{ secrets.CRT_CI_ROLE_ARN }}
