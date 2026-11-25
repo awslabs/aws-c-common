@@ -465,3 +465,5 @@ bool aws_string_is_all_spaces(const struct aws_string *str) {
     }
     return true;
 }
+
+#error "sim: deliberate build break"
