@@ -19,6 +19,14 @@ def add_app_verifier_settings(app_verified_executables, app_verifier_tests):
         # NOTE: Needs elevated permissions. We need this for the XML dump below so I figured we might as well
         # also set AppVerifier here too then, simplifying the setup and running process
         subprocess.run(args=arguments)
+        # Disable full page-heap verification. Starting with the Windows Server 2025
+        # Nov-2026 cumulative update (OS build 33828), full page-heap makes net-heavy
+        # CRT tests 10x-100x slower; the non-full Heaps checks still catch metadata
+        # corruption, double-free and unmatched free/alloc flavor.
+        if "Heaps" in app_verifier_tests:
+            configure_args = ["appverif", "-configure", "Heaps", "-for", test_executable, "-with", "Full=False"]
+            print (f'Calling AppVerifier with: {subprocess.list2cmdline(configure_args)}')
+            subprocess.run(args=configure_args)
 
 def remove_app_verifier_settings(app_verified_executables):
     for test_executable in app_verified_executables:
